@@ -1,0 +1,5 @@
+# Local database, backups and logs (contain business data — keep out of Git)
+data/
+*.log
+node_modules/
+.env

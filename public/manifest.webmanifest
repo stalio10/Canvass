@@ -1,0 +1,10 @@
+{
+  "name": "Canvass Lead Finder ERP",
+  "short_name": "Canvass",
+  "description": "Discover. Validate. Analyse. Convert.",
+  "start_url": "./#dashboard",
+  "display": "standalone",
+  "background_color": "#f3f5f9",
+  "theme_color": "#3157e8",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
