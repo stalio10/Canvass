@@ -41,6 +41,7 @@ There's nothing to `npm install`. The app has no third-party server dependencies
 | Backups (daily automatic, manual, download, restore), search history, audit history, API usage and cost | ✅ Complete |
 | Excel and CSV import/export | ✅ Complete |
 | Google Maps Platform compliance (30-day cache purge, attribution, Google content excluded from exports by default) | ✅ Complete |
+| **Free-tier protection**: hard monthly and daily limits on Google Places requests, enforced before a request is sent | ✅ Complete (on by default: 500 per month, 100 per day) |
 | Scheduled discovery (daily, weekly or monthly) | ✅ Complete. Runs while the app is running |
 | Team logins and multi-office cloud sync | ❌ Not built. The app is a local single-office server by design ("no login for local use"). Network mode with a PIN lets several devices on the same Wi-Fi share one database |
 | Android | ⚠️ Installable web app (PWA). Full install needs HTTPS; over plain Wi-Fi it opens in the browser. No native APK |
@@ -98,7 +99,7 @@ data/              Your database and backups (created on first run; never commit
 npm test
 ```
 
-Runs 59 automated checks covering mandatory rules, duplicate detection, API failures, missing-information handling, pipeline transfer, retention purge, backups and API security.
+Runs 65 automated checks covering mandatory rules, duplicate detection, API failures, missing-information handling, pipeline transfer, free-tier limits, retention purge, backups and API security.
 
 ## Data and privacy
 

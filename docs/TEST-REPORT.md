@@ -3,7 +3,7 @@
 **Product:** CANVASS Lead Finder ERP v1.0.0
 **Date:** 2026-11-24
 **Command:** `npm test` (Node.js built-in test runner, Node v22.23.5)
-**Result:** **59 of 59 automated tests passed.**
+**Result:** **65 of 65 automated tests passed.**
 
 ## Scope
 
@@ -12,6 +12,7 @@
 | `test/rules.test.js` | Mandatory validation rules, age, activity, industry, location, size, scoring, services |
 | `test/audit.test.js` | Website analysis, Google Business audit, review analysis, pitch honesty |
 | `test/engine.test.js` | Discovery and bulk engine, duplicates, API failures, missing data, pipeline transfer, retention, backups |
+| `test/budget.test.js` | Free-tier protection: monthly and daily limits, nothing sent beyond the limit, partial searches |
 | `test/api.test.js` | REST API security, key masking, pipeline rules, contact cooldown, exports, demo data |
 
 External APIs are **mocked** in the automated tests: Google Places, RDAP, Internet Archive, PageSpeed and websites. That makes the results repeatable and avoids billing. The mocks return the same response shapes as the real services.
@@ -54,6 +55,12 @@ External APIs are **mocked** in the automated tests: Google Places, RDAP, Intern
 | ✅ Pass | bulk upload without Google key: missing information stays Unverified, never invented |
 | ✅ Pass | Google content is purged after the retention period; Place ID kept |
 | ✅ Pass | backups exclude API keys and restore round-trips |
+| ✅ Pass | requests stop at the monthly limit and nothing is sent beyond it |
+| ✅ Pass | daily limit is enforced separately |
+| ✅ Pass | failed requests also count, so the cap errs on the safe side |
+| ✅ Pass | other free services are never blocked by the Places limit |
+| ✅ Pass | discovery refuses to start at the limit, and stops mid-search keeping what was found |
+| ✅ Pass | limits can be switched off deliberately |
 | ✅ Pass | qualified only when every mandatory rule passes |
 | ✅ Pass | closed businesses are rejected |
 | ✅ Pass | companies older than the window are rejected |

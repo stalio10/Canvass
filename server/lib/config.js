@@ -62,6 +62,7 @@ const DEFAULTS = {
   concurrency: 2,
   contactCooldownDays: 14,
   demoMode: false,
+  budget: { enabled: true, placesMonthlyLimit: 500, placesDailyLimit: 100 },
   costPer1000: { places: 40, pagespeed: 0, rdap: 0, wayback: 0, website: 0 },
   schedules: []
 };
@@ -107,6 +108,11 @@ function applySettingsPatch(cur, p) {
     if (typeof p[b] === 'boolean') s[b] = p[b];
   if (p.weights) for (const k of Object.keys(s.weights)) s.weights[k] = num(p.weights[k], 0, 100, s.weights[k]);
   if (p.priority) { s.priority.high = num(p.priority.high, 1, 100, s.priority.high); s.priority.medium = num(p.priority.medium, 0, s.priority.high, s.priority.medium); }
+  if (p.budget && typeof p.budget === 'object') {
+    if (typeof p.budget.enabled === 'boolean') s.budget.enabled = p.budget.enabled;
+    s.budget.placesMonthlyLimit = num(p.budget.placesMonthlyLimit, 0, 1000000, s.budget.placesMonthlyLimit);
+    s.budget.placesDailyLimit = num(p.budget.placesDailyLimit, 0, 100000, s.budget.placesDailyLimit);
+  }
   if (p.costPer1000) for (const k of Object.keys(s.costPer1000)) s.costPer1000[k] = num(p.costPer1000[k], 0, 10000, s.costPer1000[k]);
   if (p.benchmarks && typeof p.benchmarks === 'object') for (const [k, v] of Object.entries(p.benchmarks)) {
     if (!v || typeof v !== 'object') continue;

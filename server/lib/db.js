@@ -4,7 +4,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { DEFAULTS } = require('./config');
-const { nowIso, normName, normPhone, normPlace, domainOf, setUsageSink } = require('./util');
+const { nowIso, normName, normPhone, normPlace, domainOf, setUsageSink, setBudgetGuard, ApiError } = require('./util');
+// Google bills by calendar month in Pacific Time, so limits are counted the same way.
+const pacific = (d, withDay) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', ...(withDay ? { day: '2-digit' } : {}) }).format(d);
 
 const SCHEMA = 1;
 const GOOGLE_RESTRICTED_FIELDS = ['rating', 'userRatingCount', 'reviews', 'photos', 'photoCount', 'editorialSummary', 'regularOpeningHours', 'location', 'addressComponents', 'formattedAddress', 'types', 'primaryType', 'primaryTypeDisplayName', 'nationalPhoneNumber', 'internationalPhoneNumber', 'websiteUri', 'googleMapsUri', 'displayName', 'businessStatus'];
@@ -16,7 +18,7 @@ function emptyState() {
 
 function mergeDefaults(settings) {
   const s = { ...JSON.parse(JSON.stringify(DEFAULTS)), ...(settings || {}) };
-  for (const k of ['weights', 'priority', 'company', 'costPer1000']) s[k] = { ...DEFAULTS[k], ...(settings?.[k] || {}) };
+  for (const k of ['weights', 'priority', 'company', 'costPer1000', 'budget']) s[k] = { ...DEFAULTS[k], ...(settings?.[k] || {}) };
   s.benchmarks = { ...DEFAULTS.benchmarks, ...(settings?.benchmarks || {}) };
   return s;
 }
@@ -28,6 +30,7 @@ class Store {
     this.state = this.load();
     this.timer = null;
     setUsageSink((api, ok) => this.trackUsage(api, ok));
+    setBudgetGuard(api => this.assertWithinBudget(api));
   }
   load() {
     if (!fs.existsSync(this.file)) { const s = emptyState(); this.writeNow(s); return s; }
@@ -125,7 +128,26 @@ class Store {
     if (i >= 0) this.state.jobs[i] = slim; else this.state.jobs.unshift(slim);
     this.state.jobs = this.state.jobs.slice(0, 300); this.save();
   }
+  /** Free-tier protection: refuse a Google Places request once the monthly or daily limit is reached. */
+  budgetStatus(now = new Date()) {
+    const b = this.state.settings.budget, month = pacific(now), day = pacific(now, true);
+    const used = this.state.billing?.months?.[month]?.places || 0, dayUsed = this.state.billing?.days?.[day]?.places || 0;
+    return { enabled: b.enabled, month, used, limit: b.placesMonthlyLimit, remaining: b.enabled ? Math.max(0, b.placesMonthlyLimit - used) : null,
+      dayUsed, dayLimit: b.placesDailyLimit, dayRemaining: b.enabled ? Math.max(0, b.placesDailyLimit - dayUsed) : null };
+  }
+  assertWithinBudget(api) {
+    if (api !== 'places') return;
+    const s = this.budgetStatus();
+    if (!s.enabled) return;
+    if (s.remaining <= 0) throw new ApiError(`Monthly Google Places limit reached (${s.used} of ${s.limit} requests in ${s.month}). Canvass stopped before making a billable request. It resets next month, or raise the limit in Settings.`, { api, code: 'BUDGET' });
+    if (s.dayRemaining <= 0) throw new ApiError(`Daily Google Places limit reached (${s.dayUsed} of ${s.dayLimit} today). Canvass stopped before making a billable request. Try again tomorrow, or raise the limit in Settings.`, { api, code: 'BUDGET' });
+  }
   trackUsage(api, ok) {
+    if (api === 'places') { // every attempt counts (including failures) so the cap errs on the safe side
+      const b = this.state.billing ||= { months: {}, days: {} }, m = pacific(new Date()), d = pacific(new Date(), true);
+      (b.months[m] ||= { places: 0 }).places++; (b.days[d] ||= { places: 0 }).places++;
+      for (const k of Object.keys(b.days).sort().slice(0, -60)) delete b.days[k];
+    }
     const day = new Date().toISOString().slice(0, 10);
     const d = this.state.usage[day] ||= {};
     const a = d[api] ||= { ok: 0, failed: 0 };

@@ -56,6 +56,7 @@ async function refreshMeta() {
   const nd = $('#navDue'); nd.textContent = t.followUpsDue; nd.hidden = !t.followUpsDue; nd.title = 'Follow-ups due';
   $('#status').innerHTML = `<div><span class="dot ${S.health.placesKey ? 'on' : 'off'}"></span>Google Places ${S.health.placesKey ? 'connected' : 'key not set'}</div>
     <div><span class="dot ${S.health.pageSpeedKey ? 'on' : 'off'}"></span>PageSpeed ${S.health.pageSpeedKey ? 'key set' : 'free quota'}</div>
+    ${S.health.budget?.enabled ? `<div title="Google Places requests this billing month (Pacific Time). Canvass refuses requests beyond your limit.">Google requests: <b>${S.health.budget.used}</b> / ${S.health.budget.limit} this month</div>` : '<div style="color:var(--bad)">Free-tier protection off</div>'}
     <div>${S.health.demoMode ? '<span class="pill demo">Demo mode on</span>' : 'Production data'}</div><div>v${esc(S.health.version)}</div>`;
 }
 const industryOptions = (sel, any = 'Choose industry') => `<option value="">${esc(any)}</option>` + S.settings.industries.map(i => `<option value="${esc(i.id)}" ${i.id === sel ? 'selected' : ''}>${esc(i.name)}</option>`).join('');
@@ -123,7 +124,7 @@ function watchJob(el, jobId) {
       <p class="small muted">${esc(j.progress?.phase || '')} · ${j.progress?.done ?? 0} of ${j.progress?.total ?? '?'} processed</p>
       <div class="progress"><i style="width:${pct}%"></i></div>
       <p class="small"><b>${esc(countsText(j.counts))}</b></p>
-      ${j.error ? `<div class="banner bad">${esc(j.error)}</div>` : ''}
+      ${j.error ? `<div class="banner bad">${esc(j.error)}</div>` : ''}${j.note ? `<div class="banner info">${esc(j.note)}</div>` : ''}
       <div class="row" style="margin-bottom:10px">${['queued', 'running'].includes(j.status) ? '<button class="btn sm danger" id="jobStop">Stop</button>' : '<a class="btn sm" href="#leads">View qualified leads</a>'}</div>
       <div class="log" id="jobLog">${esc((j.log || []).slice(-80).join('\n'))}</div>`;
     const lg = $('#jobLog', el); if (lg) lg.scrollTop = lg.scrollHeight;
@@ -170,7 +171,9 @@ pages.finder = async el => {
     $('#catList').innerHTML = (ind?.keywords || []).map(k => `<option>${esc(k)}</option>`).join('');
     const cap = Math.min(s.maxCandidatesPerSearch, Math.max((+f.count || 1) * 6, 20)), queries = f.category ? 1 : 1 + Math.min(4, ind?.keywords?.length || 0);
     const pagesMax = Math.min(Math.ceil(cap / 20) + queries, queries * 3);
-    $('#estimate').textContent = `Analyses up to ${cap} companies and stops early once ${+f.count || 1} qualified leads are found. Up to ${pagesMax} Google Places requests (≈ US$${(pagesMax * (s.costPer1000.places || 0) / 1000).toFixed(2)} at your configured price).`;
+    const b = S.health.budget, left = b?.enabled ? Math.min(b.remaining, b.dayRemaining) : null;
+    $('#estimate').innerHTML = esc(`Analyses up to ${cap} companies and stops early once ${+f.count || 1} qualified leads are found. Uses up to ${pagesMax} Google Places requests.`) +
+      (left === null ? ' <b style="color:var(--bad)">Free-tier protection is off.</b>' : ` <b>${left} requests left within your limits</b> (${b.used}/${b.limit} this month, ${b.dayUsed}/${b.dayLimit} today).` + (left < pagesMax ? ' <span style="color:var(--warn)">The search will stop when the limit is reached; companies found so far are still processed.</span>' : ''));
   };
   form.oninput = upd; upd();
   $('#findGo').onclick = async () => {
@@ -371,6 +374,8 @@ pages.reports = async el => {
   const h = await api('/history');
   $('#hist').innerHTML = h.searches.length ? `<div class="tbl-wrap"><table><thead><tr><th>When</th><th>Type</th><th>Search / file</th><th>Candidates</th><th>Results</th></tr></thead><tbody>${h.searches.map(s => `<tr><td class="num small">${esc(fmtDateTime(s.at))}</td><td>${esc(s.type)}</td><td class="small">${esc(s.params?.fileName || [s.params?.category || s.params?.industryId, [s.params?.area, s.params?.city, s.params?.country].filter(Boolean).join(', ')].join(' · '))}</td><td class="num">${s.candidates ?? ''}</td><td class="small">${esc(countsText(s.counts))}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No searches yet.</div>';
   const u = await api('/usage');
+  const bb = u.budget;
+  $('#usage').insertAdjacentHTML('beforebegin', `<p>${bb.enabled ? `Free-tier protection on: <b>${bb.used}</b> of ${bb.limit} Google Places requests used in ${esc(bb.month)} (Pacific Time); <b>${bb.dayUsed}</b> of ${bb.dayLimit} today.` : '<b style="color:var(--bad)">Free-tier protection is off.</b>'}</p>`);
   $('#usage').innerHTML = u.days.length ? `<p class="small muted">${esc(u.note)}</p><div class="tbl-wrap"><table><thead><tr><th>Day</th><th>Google Places</th><th>PageSpeed</th><th>RDAP</th><th>Archive</th><th>Website checks</th><th>Est. cost (US$)</th></tr></thead><tbody>${u.days.map(d => `<tr><td class="num">${esc(d.day)}</td>${['places', 'pagespeed', 'rdap', 'wayback', 'website'].map(k => `<td class="num">${d.apis[k] ? `${d.apis[k].ok}${d.apis[k].failed ? ` <span class="small" style="color:var(--bad)">(${d.apis[k].failed} failed)</span>` : ''}` : '—'}</td>`).join('')}<td class="num">${d.estimatedCostUsd.toFixed(2)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No API requests yet.</div>';
 };
 
@@ -385,6 +390,11 @@ pages.settings = async el => {
     <label class="f">Google Places API key<input class="in" name="googlePlacesKey" type="password" autocomplete="off" placeholder="${s.googlePlacesKeyConfigured ? esc(s.googlePlacesKey) + ' (saved)' : 'Not set'}"><small>${s.googlePlacesKeyFromEnv ? 'Set by GOOGLE_PLACES_API_KEY environment variable.' : 'Requires Places API (New) and billing. Restrict the key to Places API.'}</small></label>
     <label class="f">PageSpeed Insights API key <small>(optional)</small><input class="in" name="pageSpeedKey" type="password" autocomplete="off" placeholder="${s.pageSpeedKeyConfigured ? esc(s.pageSpeedKey) + ' (saved)' : 'Not set — limited free quota'}"><small>Raises the PageSpeed quota. Free from Google Cloud.</small></label>
   </div><p class="small muted">Leave a key field empty to keep the saved key. Type a single space and save to remove it.</p></section>
+  <section class="card"><h2>Free-tier protection (Google Places)</h2>
+    <p class="small muted" style="margin-top:-6px">Canvass counts every Google Places request and refuses to send more once a limit is reached, so a search can't go past your free allowance. Months are counted in Pacific Time, as Google bills. Set the monthly limit a little below the free monthly calls Google lists for <b>Text Search (Enterprise + Atmosphere)</b> on its pricing page.</p>
+    <div class="stack">${chk('b_enabled', s.budget.enabled, 'Enforce limits (recommended)', 'Off = no limit inside Canvass. Google quota caps still apply if you set them.')}</div>
+    <div class="form mt">${num('b_month', s.budget.placesMonthlyLimit, 'Monthly request limit')}${num('b_day', s.budget.placesDailyLimit, 'Daily request limit')}</div>
+    <p class="small">Used this month: <b>${S.health.budget.used}</b> · today: <b>${S.health.budget.dayUsed}</b></p></section>
   <section class="card"><h2>Lead eligibility</h2><div class="form">
     ${num('eligibilityYears', s.eligibilityYears, 'Eligibility window (years)', 'Measured from today, so it updates automatically.')}
     ${num('activeMinEvidence', s.activeMinEvidence, 'Activity signals required', 'Besides Google "operational" status.')}
@@ -439,6 +449,7 @@ pages.settings = async el => {
       weights: { age: +v('w_age'), activity: +v('w_activity'), gbp: +v('w_gbp'), website: +v('w_website'), contact: +v('w_contact') }, priority: { high: +v('p_high'), medium: +v('p_medium') },
       googleRetentionDays: +v('googleRetentionDays'), brokenLinkSample: +v('brokenLinkSample'), concurrency: +v('concurrency'), contactCooldownDays: +v('contactCooldownDays'),
       costPer1000: { ...s.costPer1000, places: +v('cost_places') },
+      budget: { enabled: b('b_enabled'), placesMonthlyLimit: +v('b_month'), placesDailyLimit: +v('b_day') },
       company: Object.fromEntries(['name', 'sender', 'phone', 'email', 'website'].map(k => [k, v('c_' + k)])),
       team: v('team').split('\n').map(x => x.trim()).filter(Boolean),
       services: s.services.map((x, i) => ({ ...x, enabled: $(`[data-svc="${i}"]`).checked })),

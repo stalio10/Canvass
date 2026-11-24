@@ -49,7 +49,7 @@ function summary(c) {
 const STAGES = ['New', 'Contacted', 'Follow-up', 'Proposal sent', 'Negotiation', 'Won', 'Lost'];
 
 const routes = [
-  ['GET', /^\/api\/health$/, () => ({ ok: true, version: require('../package.json').version, time: nowIso(), placesKey: !!effectiveKey(store.settings, 'googlePlacesKey'), pageSpeedKey: !!effectiveKey(store.settings, 'pageSpeedKey'), demoMode: store.settings.demoMode })],
+  ['GET', /^\/api\/health$/, () => ({ ok: true, version: require('../package.json').version, time: nowIso(), placesKey: !!effectiveKey(store.settings, 'googlePlacesKey'), pageSpeedKey: !!effectiveKey(store.settings, 'pageSpeedKey'), demoMode: store.settings.demoMode, budget: store.budgetStatus() })],
   ['GET', /^\/api\/settings$/, () => publicSettings(store.settings)],
   ['PUT', /^\/api\/settings$/, async req => { store.state.settings = applySettingsPatch(store.settings, await readJson(req)); store.flush(); return publicSettings(store.settings); }],
   ['GET', /^\/api\/dashboard$/, () => reports.dashboard(store)],
@@ -112,7 +112,7 @@ const routes = [
   ['GET', /^\/api\/jobs\/([\w-]+)$/, (req, m) => { const j = jobs.get(m[1]); need(j, 'Job not found.', 404); return j; }],
   ['POST', /^\/api\/jobs\/([\w-]+)\/cancel$/, (req, m) => ({ cancelled: jobs.cancel(m[1]) })],
   ['GET', /^\/api\/history$/, () => ({ searches: store.state.searches.slice(0, 200), duplicates: store.state.duplicates.slice(0, 300) })],
-  ['GET', /^\/api\/usage$/, () => ({ days: store.usageSummary(60), costPer1000: store.settings.costPer1000, note: 'Estimated from request counts and the prices in Settings. Check your Google Cloud billing for actual charges.' })],
+  ['GET', /^\/api\/usage$/, () => ({ budget: store.budgetStatus(), days: store.usageSummary(60), costPer1000: store.settings.costPer1000, note: 'Estimated from request counts and the prices in Settings. Check your Google Cloud billing for actual charges.' })],
   ['GET', /^\/api\/export$/, (req, m, q) => {
     const t = reports.exportTable(store, q.get('dataset') || 'qualified');
     if (q.get('format') === 'csv') return { raw: reports.toCsv(t), type: 'text/csv; charset=utf-8', file: `canvass-${q.get('dataset') || 'qualified'}-${nowIso().slice(0, 10)}.csv` };

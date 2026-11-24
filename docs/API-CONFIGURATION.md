@@ -25,6 +25,21 @@ Canvass uses only authorised data sources. It does not scrape Google Maps pages.
 
 The finder shows an estimate before you start. One Text Search page returns up to 20 businesses and is one billed request. A search for 10 qualified leads analyses up to 60 companies (3 to 15 requests, depending on how many query variations run). Canvass asks for all fields in the search request itself, so it doesn't make a second "details" call per company. The **Reports and Backup → API usage** table counts every request and estimates cost from the price you enter in Settings. Your Google Cloud billing page shows the actual charges.
 
+## Staying within the free tier
+
+Use both layers below. Together they make it very hard to be charged for Google Places.
+
+**Layer 1: Canvass limits (built in, on by default).** Go to **Settings → Free-tier protection**. Canvass counts every Google Places request, including failed ones, by calendar month in Pacific Time (the way Google bills). Once the monthly or daily limit is reached, it refuses to send another request. A search that hits the limit stops early and still processes the companies already found. The sidebar shows "Google requests: used / limit this month".
+
+- Default: **500 per month, 100 per day**.
+- Open Google's Places API pricing page, find the free monthly calls for **Text Search (Enterprise + Atmosphere)**, and set the monthly limit a little below that number. Google changes its pricing from time to time, so check it occasionally.
+
+**Layer 2: Google quota caps (set once in Google Cloud).** Go to **APIs & Services → Places API (New) → Quotas & system limits**. Edit *Text Search requests per day* (and *Place Details requests per day*) to a low number, for example 50 per day. Google then refuses extra requests itself, even if something else used the key.
+
+**Also:** set **Billing → Budgets & alerts** to email you at $1. A budget alert only warns you and does not stop spending; the quota caps are what stop it.
+
+**What is not covered.** If the key is copied and used outside Canvass, only Layer 2 protects you. Restrict the key to Places API (New) and PageSpeed Insights API, and keep it private.
+
 ## 2. PageSpeed Insights key (optional)
 
 1. In the same project, enable **PageSpeed Insights API**.

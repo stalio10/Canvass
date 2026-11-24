@@ -17,6 +17,9 @@ class ApiError extends Error {
 // ---------- usage / cost monitoring ----------
 let usageSink = null; // set by db layer: (api, ok) => void
 function setUsageSink(fn) { usageSink = fn; }
+// Spending guard: called before every outbound request; throws to stop a billable call before it is sent.
+let budgetGuard = null;
+function setBudgetGuard(fn) { budgetGuard = fn; }
 function recordUsage(api, ok) { try { usageSink && usageSink(api, ok); } catch { /* never break a request on metrics */ } }
 
 // ---------- per-API rate limiting ----------
@@ -82,6 +85,7 @@ async function httpFetch(url, opts = {}) {
   const { api = 'website', timeoutMs = 20000, retries = 2, guard = false, maxRedirects = 5, ...init } = opts;
   let attempt = 0;
   for (;;) {
+    if (budgetGuard) budgetGuard(api); // throws ApiError(code 'BUDGET') — nothing is sent or counted
     await throttle(api);
     const started = Date.now();
     try {
@@ -172,6 +176,6 @@ const yearsBetween = (fromIso, to = new Date()) => (to - new Date(fromIso)) / (3
 const monthsBetween = (fromIso, to = new Date()) => (to - new Date(fromIso)) / (30.436875 * 86400000);
 const isValidDate = s => !!s && !Number.isNaN(new Date(s).getTime());
 
-module.exports = { internetOk, usingProxy, sleep, nowIso, newId, ApiError, httpFetch, readTextLimited, assertPublicUrl, isPrivateIp, setUsageSink,
+module.exports = { setBudgetGuard, internetOk, usingProxy, sleep, nowIso, newId, ApiError, httpFetch, readTextLimited, assertPublicUrl, isPrivateIp, setUsageSink,
   recordUsage, normalizeUrl, domainOf, registrableDomain, isSocialOrPlatformUrl, normName, normPhone, normPlace,
   nameSimilarity, yearsBetween, monthsBetween, isValidDate };

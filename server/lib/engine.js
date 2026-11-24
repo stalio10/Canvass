@@ -165,6 +165,8 @@ function startDiscovery(store, jobs, params) {
   if (!p.city) throw new Error('Choose a city.');
   if (!p.industryId) throw new Error('Choose an industry.');
   if (!effectiveKey(s, 'googlePlacesKey')) throw new Error('Add a Google Places API key in Settings to use automatic discovery. Bulk Upload works without it.');
+  const budget = store.budgetStatus();
+  if (budget.enabled && (budget.remaining <= 0 || budget.dayRemaining <= 0)) throw new Error(`Google Places free-tier limit reached (${budget.used}/${budget.limit} this month, ${budget.dayUsed}/${budget.dayLimit} today). No requests were made.`);
   const ind = s.industries.find(i => i.id === p.industryId);
   return jobs.enqueue('discovery', p, async (job, log) => {
     const key = effectiveKey(store.settings, 'googlePlacesKey');
@@ -176,14 +178,17 @@ function startDiscovery(store, jobs, params) {
       let token = '';
       for (let page = 0; page < 3 && found.size < maxCandidates && !job.cancelRequested; page++) {
         log(`Search "${q}" page ${page + 1}`);
-        const r = await places.textSearch(key, { textQuery: q, pageToken: token, pageSize: 20, regionCode: regionCode(p.country) });
+        let r;
+        try { r = await places.textSearch(key, { textQuery: q, pageToken: token, pageSize: 20, regionCode: regionCode(p.country) }); }
+        catch (e) { if (e.code !== 'BUDGET') throw e; log(e.message); job.budgetStopped = e.message; break; }
         for (const pl of r.places) if (!found.has(pl.id) && found.size < maxCandidates) found.set(pl.id, pl);
         token = r.nextPageToken; job.progress.total = found.size;
         if (!token) break;
         await sleep(300);
       }
-      if (found.size >= maxCandidates || job.cancelRequested) break;
+      if (found.size >= maxCandidates || job.cancelRequested || job.budgetStopped) break;
     }
+    if (job.budgetStopped && !found.size) throw new Error(job.budgetStopped);
     log(`${found.size} candidate businesses found`);
     const chainCounts = {};
     for (const pl of found.values()) { const n = normName(pl.displayName?.text); chainCounts[n] = (chainCounts[n] || 0) + 1; }
@@ -206,6 +211,7 @@ function startDiscovery(store, jobs, params) {
       if (qualified >= p.count && !job.cancelRequested) { job.cancelRequested = true; job.reachedTarget = true; log(`Target of ${p.count} qualified leads reached`); }
     }, () => job.cancelRequested);
     if (job.reachedTarget) job.cancelRequested = false;
+    if (job.budgetStopped) job.note = 'Stopped early: ' + job.budgetStopped;
     store.addSearch({ ...search, status: 'done', finishedAt: nowIso(), candidates: candidates.length, processed: job.progress.done, counts: job.counts });
     log('Finished');
   });
