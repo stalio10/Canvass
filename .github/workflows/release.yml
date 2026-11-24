@@ -1,0 +1,35 @@
+# Builds the portable Windows package and publishes it as a GitHub Release whenever a version tag (v1.0.0, v1.1.0, …) is pushed.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Windows package
+        run: scripts/package-windows.sh v22.23.5 dist
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          NOTES=docs/RELEASE-NOTES.md
+          gh release create "$TAG" dist/Canvass-Windows.zip \
+            --title "Canvass Lead Finder $TAG" \
+            --notes-file "$NOTES"
