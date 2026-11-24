@@ -8,7 +8,11 @@ A lead-finding ERP for Canvass. It finds new, active businesses that need websit
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
-## Quick start (Windows)
+## Easiest: portable Windows package (nothing to install)
+
+Unzip **Canvass-Windows.zip** and double-click **Start Canvass.bat**. It contains its own Node.js runtime. Your data is saved in the `data` folder beside it. To build the package: `scripts/package-windows.sh` (it downloads Node.js for Windows, checks its checksum and writes `dist/Canvass-Windows.zip`).
+
+## Quick start (Windows, from source)
 
 1. Install **Node.js LTS** (version 20 or newer) from <https://nodejs.org>. This is a one-time step.
 2. Double-click **`start-canvass.bat`**. Your browser opens at <http://localhost:4321>.
