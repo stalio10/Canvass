@@ -7,3 +7,4 @@ dist/
 
 # Canvass web app: local test data
 canvass/data/
+canvass/config.php

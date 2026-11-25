@@ -10,6 +10,7 @@ DirectoryIndex index.html
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
   # never serve the code library, the data folder, databases or backups
   RewriteRule ^(lib|data|tests)(/|$) - [F,L]
+  RewriteRule ^(config|router)\.php$ - [F,L]
   RewriteRule \.(sqlite|sqlite-wal|sqlite-shm|db|zip|bak|md|json)$ - [F,L]
 </IfModule>
 

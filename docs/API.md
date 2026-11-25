@@ -1,82 +1,74 @@
-# REST API reference
+# Canvass web API
 
-Base URL: `http://localhost:4321/api`. Everything is JSON.
+All calls go to `api.php?a=<action>`. Responses are JSON. Errors are `{"error": "..."}` with an HTTP status.
 
-- Requests other than `GET` must send the header `X-Requested-With: canvass`. This blocks cross-site form attacks.
-- If the server was started with `CANVASS_PIN`, every request must send `X-Canvass-PIN: <pin>`.
-- Errors return `{ "error": "message" }` with status 400 (bad input), 401 (PIN), 403, 404, 409 (conflict such as a repeat contact) or 500.
+- **Sign-in:** a session cookie (`canvass_t`, HttpOnly) from `login`. Everything except `me` and `login` needs it (401 otherwise).
+- **Cross-site protection:** every `POST` must send the header `X-Canvass: 1` (400 otherwise).
+- **Body:** `POST` actions take a JSON body. `GET` actions take query parameters.
+- **Admin only:** marked (A). Others get 403.
 
-## System
+## Pitch HQ
 
-| Method | Path | Description |
-|---|---|---|
-| GET | `/health` | Version, whether keys are configured, demo mode |
-| GET | `/settings` | All settings. Keys are masked (`googlePlacesKey: "••••1234"`, `googlePlacesKeyConfigured: true`) |
-| PUT | `/settings` | Partial update. Numbers are clamped to safe ranges. Masked key values are ignored. `""` removes a key |
-| GET | `/dashboard` | `totals` (14 counters) and `charts` (validation, industry, location, issues, services, pipeline, priority) |
-
-## Lead discovery (both modules)
-
-| Method | Path | Body | Description |
+| Action | Method | Body / query | Returns |
 |---|---|---|---|
-| POST | `/discover` | `{ country, city, area?, industryId, category?, count }` | Module A. Starts a Google discovery job. Returns the job |
-| POST | `/bulk` | `{ rows?: string[][], text?: string, fileName?, industryId?, city?, country? }` | Module B. `rows` is a sheet (first row = headers); `text` is one URL, name or Maps link per line |
-| POST | `/bulk/legacy` | none | Re-validates the 102 businesses in `legacy/analyzed-leads-data.js` |
-| POST | `/refresh` | `{ ids: [] }` | Re-runs all checks for up to 500 companies |
-| GET | `/jobs` | | Latest 50 jobs (without logs) |
-| GET | `/jobs/:id` | | Job with `status` (queued, running, done, failed, cancelled), `progress`, `counts`, `log` |
-| POST | `/jobs/:id/cancel` | | Stops after the companies in progress |
+| `me` | GET | | `{user, version}` (`user` is null when signed out) |
+| `login` | POST | `{username, password}` | `{user}`; 10 wrong tries per IP per 15 min → 429 |
+| `logout` | POST | | `{ok}` |
+| `sync` | GET | `rev`, `acc=1` while Accounts is open | `{rev, me, businesses, members, rec, accHasPw, accUnlocked}`; `same:true` without businesses when `rev` matches. `rec` amounts are null unless Accounts is unlocked |
+| `biz_set` | POST | `{id, data}` | create or restore a business |
+| `biz_update` | POST | `{id, patch}` | owner, helpers or admin; helpers can't move stages; `lfId` can't be set by hand |
+| `claim` | POST | `{id}` | first one wins; 409 `{taken:true}` otherwise |
+| `act_add` / `act_delete` | POST | `{id, act}` / `{id, actId}` | activity and comments |
+| `biz_delete` | POST | `{id}` | admin or creator |
+| `member_update` | POST | `{colorIdx?, focus?, theme?, mentionsSeen?}` | |
+| `password` | POST | `{current, new}` | change your own password |
+| `upload` / `file` | POST form / GET `id` | | files up to 25 MB |
+| `admin_users` / `admin_user_save` (A) | GET / POST | | team access |
 
-Recognised upload headers (case and punctuation ignored): Company / Business name, Website / URL / Domain, Phone, Email, Address, City / Emirate, Area, Country, Industry / Category, Google Maps link, Instagram, LinkedIn, Facebook, Established date / Licence issue date, Established source.
+## Accounts
 
-## Companies
+Accounts need the accounts password. Unlocking marks the session open for 10 minutes (kept open while in use). Locked calls return **423**.
 
-| Method | Path | Description |
-|---|---|---|
-| GET | `/companies?category=&q=&industry=&priority=&city=&pipeline=1&sort=score\|recent\|name&page=&size=` | Summaries. `category` is Qualified, Unverified, Rejected, No Opportunity or all |
-| GET | `/companies/:id` | Full record (see below) |
-| PATCH | `/companies/:id` | `{ stage?, assignedTo?, followUpDate?, note?, doNotContact?, contactVerified? }`. Only qualified leads can enter the pipeline |
-| POST | `/companies/:id/evidence` | `{ type: establishment\|activity\|identity\|no-website\|invalid, source (required), date?, url?, label? }`, then re-validates |
-| POST | `/companies/:id/contact-log` | `{ channel: email\|whatsapp\|call\|proposal\|auditOffer, force? }`. Returns 409 if contacted on that channel within the cooldown, or if marked do-not-contact |
-| POST | `/companies/:id/refresh` | Re-verify one company online |
-| DELETE | `/companies/:id` | Delete |
+| Action | Method | Body | Notes |
+|---|---|---|---|
+| `acc_unlock` | POST | `{password}` | `{entries, rec, created}`. If no accounts password exists yet, the admin's first password (6+ characters) becomes it |
+| `acc_lock` | POST | | |
+| `acc_save` | POST | `{entry:{id,type,amount,date,cat,who,note}}` | `type`: capital, expense or income; amount > 0 |
+| `acc_delete` | POST | `{id}` | |
+| `rec_save` | POST | `{item:{id,name,amount,freq,next,remind,cat,who,notes}}` or `{item:{id,deleted:true}}` | recurring bills |
+| `acc_setpw` (A) | POST | `{current, password}` | signs everyone else out of Accounts |
 
-### Company record (main fields)
+## Lead Finder
 
-```jsonc
-{
-  "id": "cmp_…", "name": "…", "industryId": "interior-design", "country": "…", "city": "…", "area": "…",
-  "source": { "type": "google|bulk|legacy|demo|manual", "detail": "…", "searchId": "job_…" },
-  "contact": { "phone", "email", "website", "address", "mapsUrl", "directionsUrl" },
-  "contactSources": { "phone": "Google Places", "email": "Website: example.ae" },
-  "google": { "placeId", "fetchedAt", "businessStatus", "rating", "userRatingCount", "reviews": [], "photoCount", "types": [], … },
-  "websiteAudit": { "availability", "https", "page", "brokenLinks", "pagespeed", "issues": [] },
-  "age": { "status": "Verified|Estimated|Unverified|Not Available", "withinWindow": true|false|null, "earliestDate", "evidence": [{ "label", "date", "source", "url", "checkedAt", "strength" }], "websiteAge": {} },
-  "activity": { "status": "Verified|Unverified|Closed permanently|Closed temporarily", "evidence": [], "signals": 0 },
-  "industryCheck", "locationCheck", "sizeCheck",
-  "gbpAudit": { "issues": [], "notChecked": [] }, "reviewAnalysis": { "status", "positiveThemes", "negativeThemes", "repeatedComplaints", "confidence" },
-  "issues": [{ "id", "area": "gbp|website", "status": "Confirmed Issue|Potential Improvement", "title", "detail", "services": [], "evidence", "checkedAt" }],
-  "services": [{ "name", "group", "reasons": [] }],
-  "validation": { "category", "reasons": [], "checks": [{ "id", "label", "state", "detail" }], "validatedAt" },
-  "score": { "total": 0-100, "parts": {}, "priority": "High|Medium|Low" },
-  "pitch": { "email", "whatsapp", "call", "proposal", "auditOffer", "generatedAt" } | null,
-  "pipeline": { "inPipeline", "stage", "assignedTo", "followUpDate", "notes": [], "history": [], "contactLog": [], "doNotContact" },
-  "lastVerifiedAt": "ISO date"
-}
-```
+| Action | Method | Body / query | Returns |
+|---|---|---|---|
+| `lf_health` | GET | | keys present, demo mode, Google budget, background worker status, jobs waiting |
+| `lf_settings` | GET | | settings with keys masked (`••••1234`) |
+| `lf_settings_save` (A) | POST | settings patch | validated and clamped; masked values never overwrite a key |
+| `lf_dashboard` | GET | | totals and chart data; pipeline numbers come from linked Canvass businesses |
+| `lf_companies` | GET | `category` (Qualified, Unverified, Rejected, No Opportunity, all), `q`, `industry`, `priority`, `city`, `job`, `pipeline=1`, `sort` (score, recent, name), `page`, `size` | `{total, items}` summaries incl. `hq` (pipeline stage) |
+| `lf_company` | GET | `id` | the full record with sources |
+| `lf_company_patch` | POST | `{id, note?, doNotContact?, contactVerified?}` | |
+| `lf_company_delete` (A) | POST | `{id}` | the pipeline card, if any, stays |
+| `lf_evidence` | POST | `{id, type, source, date?, url?, label?}` | `type`: establishment, activity, identity, no-website, invalid; re-validated at once |
+| `lf_contact_log` | POST | `{id, channel, force?}` | 409 within the cooldown (14 days) or for do-not-contact; moves the pipeline card to Pitched |
+| `lf_to_pipeline` | POST | `{id, force?}` | 409 unless Qualified (send `force` to confirm); demo records refused |
+| `lf_discover` | POST | `{country, city, area?, industryId, category?, count}` | job |
+| `lf_bulk` | POST | `{rows?, text?, fileName, industryId?, city?, country?, quick?, linkHq?}` | job |
+| `lf_bulk_legacy` | POST | | job for the v0 list, if present |
+| `lf_refresh` | POST | `{ids}` | job (up to 500) |
+| `lf_jobs` / `lf_job` | GET | `id` | job list / one job with its log |
+| `lf_job_cancel` | POST | `{id}` | stops after the current business |
+| `lf_tick` | POST | | does a few seconds of background work when no cron or worker is running |
+| `lf_history` | GET | | searches and skipped duplicates |
+| `lf_usage` | GET | | Google budget and daily request counts with estimated cost |
+| `lf_export` | GET | `dataset`, `format=csv` | table, or a CSV download |
+| `lf_backup_download` | GET | | backup JSON (v1.0 shape, no keys) |
+| `lf_backup_save` / `lf_backups` | POST / GET | | server backups |
+| `lf_backup_restore` (A) / `lf_restore` (A) | POST | `{name}` / backup JSON (v1.0 or 2.0) | `{restored, addedToPipeline}` |
+| `lf_demo_load` / `lf_demo_clear` (A) | POST | | demo data on/off |
+| `lf_schedules` / `lf_schedule_save` / `lf_schedule_delete` | GET / POST / POST | | repeating searches |
 
-## Reports and backup
+## Background worker
 
-| Method | Path | Description |
-|---|---|---|
-| GET | `/export?dataset=qualified\|pipeline\|unverified\|rejected\|no-opportunity\|all` | `{ header, rows, note }` |
-| GET | `/export?…&format=csv` | CSV download (UTF-8, Excel-compatible) |
-| GET | `/history` | Search history and duplicates skipped |
-| GET | `/usage` | Requests per API per day plus estimated cost |
-| GET | `/backup` | Download a full backup (keys removed) |
-| POST | `/backup` | Save a backup in `data/backups` |
-| GET | `/backups` | List saved backups |
-| POST | `/backups/:name/restore` | Restore a saved backup (a safety backup is taken first) |
-| POST | `/restore` | Restore from an uploaded backup JSON |
-| POST | `/demo/load` / `/demo/clear` | Load or remove the labelled demo companies (also switches demo mode) |
-| GET / POST / DELETE | `/schedules`, `/schedules/:id` | Scheduled searches `{ name, everyHours (≥24), params: { country, city, area, industryId, category, count } }` |
+`php cron.php` works for about 50 seconds and stops (for a cron job every minute). `php cron.php --loop` keeps running (local use); `--watch=127.0.0.1:4400` makes it stop when the local server stops. Jobs are processed one step at a time (one Google page or one business), so no web request runs long.

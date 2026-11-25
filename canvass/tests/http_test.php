@@ -79,7 +79,7 @@ test('evidence requires a source and re-validates immediately', function () use 
   eq($post('admin', 'lf_evidence', ['id' => $c['id'], 'type' => 'establishment', 'date' => '2024-01-10'])['status'], 400);
   eq($post('admin', 'lf_evidence', ['id' => $c['id'], 'type' => 'establishment', 'date' => '2999-01-01', 'source' => 'Licence 1'])['status'], 400);
   $r = $post('admin', 'lf_evidence', ['id' => $c['id'], 'type' => 'establishment', 'date' => '2024-01-10', 'source' => 'DEMO licence 555']);
-  eq($r['status'], 200); eq($r['data']['age']['status'], 'Verified'); eq($r['data']['validation']['category'], 'Qualified'); eq($r['data']['pipeline']['inPipeline'], true);
+  eq($r['status'], 200); eq($r['data']['age']['status'], 'Verified'); eq($r['data']['validation']['category'], 'Qualified'); eq($r['data']['pipeline']['inPipeline'], false, 'demo data never enters the pipeline');
 });
 test('exports exclude Google content by default and produce CSV', function () use ($get, $post, $call) {
   $t = $get('admin', 'lf_export&dataset=all')['data']; ok_(!in_array('Google rating', $t['header'], true)); match_('/excluded/', $t['note']);

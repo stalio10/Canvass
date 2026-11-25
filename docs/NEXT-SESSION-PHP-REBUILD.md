@@ -1,5 +1,16 @@
 # Handoff: rebuild Canvass Lead Finder in PHP and combine it with Pitch HQ
 
+## Status (25 Nov 2026)
+
+- **Built, not yet live.** Phase 1 and the merge were done together at the owner's request: **Pitch HQ is now "Canvass"** and **Lead Finder is a tool inside it**, with its own expandable sub-menu in the sidebar. The app is in `canvass/` (PHP 8.2 + SQLite, like Pitch HQ). Owner's Pitch HQ v5 draft files were the starting point (`index.html`, `api.php`).
+- **Owner decisions:** test locally first from a zip, then connect Hostinger; build the missing Accounts server side; the old Pitch HQ finder becomes Lead Finder's *Quick add*.
+- **Storage is SQLite, not MySQL**, because Pitch HQ already runs on SQLite on the same plan. The data folder is shared with Pitch HQ (`domains/<domain>/canvass-hq-data`), so upgrading hq.mhdshibili.com in place keeps all its data. A separate test site needs `config.php` (see docs/SETUP.md).
+- **Tests:** `php canvass/tests/run.php` (75 pass). Package: `scripts/package-local.sh` → `dist/Canvass-Local.zip` (PHP for Windows included).
+- **Next:** owner tests the zip → merge to `main` (publishes release v2.0.0 with the zip) → owner connects the Hostinger account that hosts mhdshibili.com → deploy (see docs/SETUP.md "Put it online"), add the cron job, run a 3-lead real search with the owner's key.
+- **Still open from the Definition of done:** live deployment, the real Google search with the owner's key, and retiring the Node v1.0 code (`server/`, `public/`, `test/`) once 2.0 is live.
+
+---
+
 Paste this whole file into a new Claude Code session that has the `stalio10/Canvass` repository attached. Attach the Pitch HQ files as well.
 
 ---

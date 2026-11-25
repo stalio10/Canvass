@@ -23,8 +23,9 @@ class HttpFail extends RuntimeException { public int $http; public array $extra;
 function dataDir(): string {
   static $dir = null; if ($dir) return $dir;
   $cands = [];
-  if ($e = getenv('CANVASS_DATA_DIR')) $cands[] = $e;
   $root = dirname(__DIR__);                                         // the web folder (where index.html and api.php live)
+  if ($e = getenv('CANVASS_DATA_DIR')) $cands[] = $e;
+  if (is_file("$root/config.php")) { $cfg = include "$root/config.php"; if (is_array($cfg) && !empty($cfg['dataDir'])) $cands[] = (string) $cfg['dataDir']; }   // optional, kept out of Git
   $cands[] = dirname($root, 2) . '/canvass-hq-data';                // e.g. /home/u…/domains/mhdshibili.com/canvass-hq-data (Pitch HQ's folder)
   $cands[] = $root . '/data';
   foreach ($cands as $d) {

@@ -1,13 +1,13 @@
 {
   "name": "canvass-lead-finder-erp",
-  "version": "1.0.0",
-  "description": "CANVASS – Intelligent Lead Finder & Business Validation ERP. Discover. Validate. Analyse. Convert.",
+  "version": "2.0.0",
+  "description": "Canvass: Pitch HQ and Lead Finder in one PHP app. The Node.js v1.0 Lead Finder in server/ is kept until 2.0 is live.",
   "private": true,
   "main": "server/index.js",
   "engines": { "node": ">=20" },
   "scripts": {
     "start": "node server/index.js",
-    "test": "node --test"
+    "test": "node --test && php canvass/tests/run.php"
   },
   "license": "UNLICENSED"
 }

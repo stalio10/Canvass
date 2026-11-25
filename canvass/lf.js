@@ -80,7 +80,7 @@ LF.start = async () => {
   if (S.view.startsWith('lf-')) render.full = true, render();
 };
 LF.stop = () => { LF.on = false; clearTimeout(LF.timer); LF.dash = LF.health = LF.set = null; LF.jobs = []; LF.prevRunning = new Set(); const c = $('#lfChip'); if (c) c.hidden = true; LF.rail(); };
-LF.refreshDash = async () => { try { LF.dash = await api('lf_dashboard'); LF.rail(); if (S.view === 'overview') onData(); } catch { } };
+LF.refreshDash = async () => { try { LF.dash = await api('lf_dashboard'); LF.dashAt = Date.now(); LF.rail(); if (S.view === 'overview') onData(); } catch { } };
 LF.loadNames = async () => { try { LF.names = (await api(qs('lf_companies', { category: 'all', size: 200, sort: 'recent' }))).items; } catch { } };
 LF.kick = () => { if (LF.health) LF.health.running = (LF.health.running || 0) + 1; clearTimeout(LF.timer); LF.timer = setTimeout(LF.loop, 200); };
 LF.loop = async () => {
@@ -119,7 +119,7 @@ LF.rail = () => {
   const q = $('#cLfQ'); if (q) q.textContent = LF.dash?.totals?.qualified || '';
   const d = $('#cLf'); if (d) { const on = LF.on && LF.jobs.some(running); d.classList.toggle('on', on); d.title = on ? 'A Lead Finder search is running' : ''; }
 };
-LF.onView = v => { LF.chip(); };
+LF.onView = v => { LF.chip(); if (v === 'overview' && LF.on && Date.now() - (LF.dashAt || 0) > 15000) { LF.dashAt = Date.now(); LF.refreshDash(); } };
 
 /* ---------- sidebar group: click to open, chevron to fold ---------- */
 function applyFold(open) {

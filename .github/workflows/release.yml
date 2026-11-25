@@ -1,4 +1,4 @@
-# Publishes a GitHub Release with the portable Windows package.
+# Publishes a GitHub Release with Canvass-Local.zip (Canvass 2.0, PHP for Windows included).
 # Runs when main changes (or by hand from the Actions tab). The version comes from package.json;
 # if a release for that version already exists, nothing happens. Bump "version" to publish a new release.
 name: Release
@@ -21,6 +21,11 @@ jobs:
         with:
           node-version: '22'
 
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_sqlite, sqlite3, curl, mbstring
+
       - name: Read version
         id: v
         env:
@@ -30,20 +35,20 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           if gh release view "$TAG" >/dev/null 2>&1; then echo "exists=true" >> "$GITHUB_OUTPUT"; echo "Release $TAG already exists — skipping."; else echo "exists=false" >> "$GITHUB_OUTPUT"; fi
 
-      - name: Run tests
+      - name: Run tests (Canvass 2.0)
         if: steps.v.outputs.exists == 'false'
-        run: npm test
+        run: php canvass/tests/run.php
 
-      - name: Build Windows package
+      - name: Build the local test package
         if: steps.v.outputs.exists == 'false'
-        run: scripts/package-windows.sh v22.23.5 dist
+        run: scripts/package-local.sh 8.2.36 dist
 
       - name: Publish release
         if: steps.v.outputs.exists == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ steps.v.outputs.tag }}" dist/Canvass-Windows.zip \
+          gh release create "${{ steps.v.outputs.tag }}" dist/Canvass-Local.zip \
             --target "$GITHUB_SHA" \
-            --title "Canvass Lead Finder ${{ steps.v.outputs.tag }}" \
+            --title "Canvass ${{ steps.v.outputs.tag }}" \
             --notes-file docs/RELEASE-NOTES.md

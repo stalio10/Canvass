@@ -101,7 +101,7 @@ function lf_process_company(array &$c, array $ctx): array {
   $c['partial'] = $early;
   // 8. Pipeline transfer (qualified only). Existing pipeline work is never discarded.
   $cat = $c['validation']['category'];
-  if ($cat === 'Qualified' && empty($c['pipeline']['inPipeline']) && ($s['autoAddToPipeline'] ?? true)) {
+  if ($cat === 'Qualified' && empty($c['pipeline']['inPipeline']) && empty($c['demo']) && ($s['autoAddToPipeline'] ?? true)) {   // demo data never enters the pipeline
     $c['pipeline']['inPipeline'] = true; $c['pipeline']['stage'] = 'New'; $c['pipeline']['transferredAt'] = lf_now_iso();
     $c['pipeline']['history'][] = ['at' => lf_now_iso(), 'event' => 'Added to the Canvass pipeline after validation', 'stage' => 'New'];
   }

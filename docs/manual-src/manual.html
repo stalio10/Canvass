@@ -1,102 +1,129 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Canvass Lead Finder – User Manual</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Canvass – User Manual</title>
 <style>
-@page { size: A4; margin: 18mm 16mm; }
+@page { size: A4; margin: 16mm 15mm; }
 body { font: 10.5pt/1.55 "Segoe UI", Inter, Arial, sans-serif; color: #171b24; }
-h1 { font-size: 30pt; margin: 0; letter-spacing: -.02em; } h2 { font-size: 17pt; color: #1739ae; margin: 0 0 8pt; padding-top: 4pt; border-bottom: 2px solid #e7ecff; padding-bottom: 4pt; }
+h1 { font-size: 30pt; margin: 0; letter-spacing: -.02em; } h2 { font-size: 17pt; color: #1f44c8; margin: 0 0 8pt; padding-top: 4pt; border-bottom: 2px solid #e7ecff; padding-bottom: 4pt; }
 h3 { font-size: 12pt; margin: 14pt 0 4pt; } p, li { max-width: 62em; } .muted { color: #687185; }
 .cover { height: 250mm; display: flex; flex-direction: column; justify-content: center; page-break-after: always; }
-.cover .logo { font-size: 26pt; font-weight: 800; } .cover .logo b { color: #3157e8; } .cover .tag { letter-spacing: .25em; color: #687185; font-size: 10pt; margin: 6pt 0 40pt; text-transform: uppercase; }
-.cover .box { border-left: 4px solid #3157e8; padding: 8pt 14pt; background: #f3f5f9; margin-top: 30pt; }
+.cover .logo { font-size: 28pt; font-weight: 800; letter-spacing: -.03em } .cover .logo b { color: #2E55E6; } .cover .tag { letter-spacing: .25em; color: #687185; font-size: 10pt; margin: 6pt 0 40pt; text-transform: uppercase; }
+.cover .box { border-left: 4px solid #2E55E6; padding: 8pt 14pt; background: #f3f5f9; margin-top: 30pt; }
 section { page-break-before: always; } img { width: 100%; border: 1px solid #e3e7ee; border-radius: 6px; margin: 6pt 0 4pt; }
+img.phone { width: 42%; float: right; margin: 0 0 8pt 14pt; }
 table { border-collapse: collapse; width: 100%; font-size: 9.5pt; margin: 6pt 0; } th, td { border: 1px solid #e3e7ee; padding: 5pt 7pt; text-align: left; vertical-align: top; } th { background: #f3f5f9; }
 .note { background: #fff2dc; color: #6b4300; padding: 7pt 10pt; border-radius: 6px; } .ok { background: #e4f5ee; color: #075a46; padding: 7pt 10pt; border-radius: 6px; }
 .cap { font-size: 9pt; color: #687185; margin-top: 0; } ol li, ul li { margin: 2pt 0; } .toc li { margin: 4pt 0; }
 </style></head><body>
-<div class="cover"><div class="logo">◯ canvass<b>.</b></div><div class="tag">Discover · Validate · Analyse · Convert</div>
-<h1>Intelligent Lead Finder &amp;<br>Business Validation ERP</h1><p style="font-size:14pt" class="muted">User manual · Version 1.0</p>
-<div class="box"><b>Maximum quality leads. Minimum manual work. Zero fabricated data.</b><br>Screenshots in this manual use clearly labelled demonstration data ([DEMO], fictional businesses on .example domains).</div></div>
+<div class="cover"><div class="logo">canvass<b>.</b></div><div class="tag">Sales workspace · Pitch HQ + Lead Finder</div>
+<h1>User manual</h1><p style="font-size:14pt" class="muted">Version 2.0</p>
+<div class="box"><b>Find the right businesses, check them properly, pitch them as a team.</b><br>Screenshots use clearly labelled sample data: names starting with [DEMO] or "Example" are fictional.</div></div>
 
-<section><h2>Contents</h2><ol class="toc"><li>Getting started</li><li>Dashboard</li><li>Google Auto Lead Finder</li><li>Bulk Upload Lead Finder</li><li>How validation works</li><li>Qualified, Unverified, Rejected and No Opportunity</li><li>The company information card</li><li>Sales pitches</li><li>Sales pipeline</li><li>Reports and backup</li><li>Settings</li><li>Statuses glossary</li><li>Good practice and compliance</li></ol>
-<h2 style="margin-top:20pt">1. Getting started</h2>
-<ol><li>Install <b>Node.js LTS</b> from nodejs.org (once).</li><li>Double-click <b>start-canvass.bat</b>. Keep the black window open; your browser opens Canvass at <b>http://localhost:4321</b>.</li>
-<li>Open <b>Settings</b>, paste your Google Places API key (and optionally a PageSpeed key), fill in <i>Your company</i> and <i>Team members</i>, then <b>Save settings</b>.</li>
-<li>Run your first search in <b>Google Auto Lead Finder</b>, or upload a list in <b>Bulk Upload Lead Finder</b>.</li></ol>
-<p>The left menu has seven pages: Dashboard, Google Auto Lead Finder, Bulk Upload Lead Finder, Qualified Leads, Sales Pipeline, Reports and Backup, Settings. On phones the menu moves to the top.</p>
-<p class="note">Tip: to explore safely first, click <b>Load demo data</b> in Settings. A yellow banner shows whenever demo data is included. Remove it with <b>Remove demo data</b> before real work.</p></section>
+<section><h2>Contents</h2><ol class="toc"><li>What Canvass is</li><li>Signing in and finding your way</li><li>Lead Finder dashboard</li><li>Find on Google</li><li>Bulk upload</li><li>Quick add</li><li>Results and the business report</li><li>Pitches and contact</li><li>The pipeline</li><li>Reports and backup</li><li>Lead Finder settings</li><li>Accounts</li><li>How a business qualifies</li><li>Words used in Canvass</li><li>Good practice</li></ol>
+<h2 style="margin-top:20pt">1. What Canvass is</h2>
+<p>Canvass is one app with one login for the whole team. It brings together:</p>
+<ul><li><b>Pitch HQ</b>: the Overview, the Pipeline (Spotted → Claimed → Building pitch → Pitched → Follow-up → Won), Businesses, Team, Reports, Accounts and My space.</li>
+<li><b>Lead Finder</b>: finds businesses (on Google, from a list, or one at a time), checks each one honestly, scores it and drafts pitches. Businesses that pass every check (<b>Qualified</b>) appear in the Pipeline under <b>Spotted</b>, ready for someone to claim.</li></ul>
+<p class="ok">Nothing is ever invented. If Canvass can't confirm something it says <i>Not Available</i> or <i>Unverified</i>, and every finding shows where it came from and when.</p></section>
 
-<section><h2>2. Dashboard</h2><img src="../screenshots/dashboard.png"><p class="cap">Dashboard with demo data.</p>
-<p>The tiles count companies the ERP has actually processed. Click a tile to open the matching list. The charts show validation results, industries, locations, detected issue categories, the services recommended for qualified leads, and how many leads are at each pipeline stage. <b>Follow-ups due</b> turns red when a follow-up date has passed.</p></section>
+<section><h2>2. Signing in and finding your way</h2><img src="../screenshots/v2/overview.png"><p class="cap">The Overview. The Lead Finder card shows qualified leads and leads waiting to be claimed.</p>
+<p>Sign in with the username and password the admin gave you. The left menu has the Pitch HQ pages and the <b>Lead Finder</b> group.</p>
+<ul><li>Click <b>Lead Finder</b> to open its dashboard. Its own menu opens underneath: Dashboard, Find on Google, Bulk upload, Quick add, Results, Reports &amp; backup, Settings.</li>
+<li>Click the small arrow next to Lead Finder to fold that menu away, and again to open it. Canvass remembers your choice.</li>
+<li>Press <b>Ctrl+K</b> (⌘K on a Mac) to search businesses, Lead Finder results and actions from anywhere.</li>
+<li>While a search is running, a small progress chip stays at the bottom of every page. Click it to jump to the search.</li></ul>
+<img src="../screenshots/v2/menu-folded.png" style="width:60%"><p class="cap">The Lead Finder menu folded away.</p></section>
 
-<section><h2>3. Google Auto Lead Finder</h2><img src="../screenshots/finder.png">
-<p>Choose the <b>country, city, area</b> (optional), <b>industry</b>, an optional <b>category</b> (for example "fit-out company"), and how many <b>qualified leads</b> you need. The page shows how many companies will be analysed and an estimated Google cost. Click <b>Find and validate leads</b>.</p>
-<p>A progress panel shows each company as it's checked. The search stops early once enough qualified leads are found. Click <b>Stop</b> at any time; everything processed so far is kept.</p>
-<p><b>Repeat this search automatically</b> saves it to run daily, weekly or monthly while Canvass is running. Duplicates are skipped every time.</p></section>
+<section><h2>3. Lead Finder dashboard</h2><img src="../screenshots/v2/lf-dashboard.png">
+<p>The dashboard counts only businesses Lead Finder has actually checked. Click a tile or a coloured result to open that list. <b>Google requests</b> shows how much of your free monthly allowance is used. <b>Recent searches</b> opens the results of each search.</p>
+<img src="../screenshots/v2/phone.png" class="phone"><p>On a phone, the Lead Finder pages show their menu as a row of buttons at the top, and the bottom bar has a <b>Finder</b> tab.</p>
+<p class="note">Demo data: an admin can load fictional demo companies in Lead Finder → Settings to try things out. A yellow banner shows whenever demo data is included. Demo companies never go to the pipeline. Remove them before real work.</p></section>
 
-<section><h2>4. Bulk Upload Lead Finder</h2><img src="../screenshots/bulk.png">
-<p>Drop an Excel or CSV file, or paste one item per line: website URLs, company names or Google Maps links. Recognised columns include Company, Website, Phone, Email, Address, City, Country, Industry, Google Maps link, Instagram, LinkedIn, plus <b>Established Date</b> and <b>Established Source</b> (for example a trade licence number). If you provide those last two, companies can be age-verified straight away.</p>
-<p>Optional <b>batch checks</b> (industry, city, country) reject rows outside your target. Rows that repeat within the file or match companies already in Canvass are skipped and listed under <i>Duplicates skipped</i>.</p>
-<p>Template: <i>samples/DEMO-bulk-upload-template.csv</i>. <b>Import and re-validate legacy list</b> re-checks the 102 businesses from the previous version of the app.</p></section>
+<section><h2>4. Find on Google</h2><img src="../screenshots/v2/lf-find.png">
+<ol><li>Choose the <b>industry</b>, optionally a <b>type of business</b> (for example "fit-out company"), the <b>city</b>, optionally an <b>area</b>, and how many <b>qualified leads</b> you want.</li>
+<li>Check the box below the form: it says how many businesses will be checked and the most Google requests the search can use, next to what's left of your monthly and daily limits.</li>
+<li>Click <b>Find and check leads</b>. The panel on the right shows progress live. Click <b>Stop</b> at any time; everything checked so far is kept.</li></ol>
+<p>The search stops by itself once enough businesses qualify. If a Google limit is reached, Canvass stops <i>before</i> sending another request and still checks the businesses already found.</p>
+<p><b>Repeat automatically…</b> saves the search to run daily, weekly or monthly. Only new businesses are added; duplicates are skipped.</p></section>
 
-<section><h2>5. How validation works</h2>
-<p>Every company, whether from Google or an upload, goes through the same steps:</p>
-<table><tr><th>Check</th><th>What Canvass looks at</th><th>If it fails</th></tr>
-<tr><td>Duplicate</td><td>Google Place ID, website domain, phone, name and location, name and domain</td><td>Skipped (listed as duplicate)</td></tr>
-<tr><td>Operating now</td><td>Google status <i>plus</i> recent activity (review within 12 months, working website, or team evidence) <i>plus</i> at least 2 signals (hours, phone, map location…)</td><td>Closed: Rejected. Not enough evidence: Unverified</td></tr>
-<tr><td>Genuine business</td><td>Google Business listing or team confirmation</td><td>Unverified (or Rejected if marked fake)</td></tr>
-<tr><td>Industry</td><td>Google categories and name keywords for the chosen industry</td><td>Different industry: Rejected. Unclear: Unverified</td></tr>
-<tr><td>Location</td><td>Address city and country</td><td>Elsewhere: Rejected. No address: Unverified</td></tr>
-<tr><td>Size</td><td>Over 1,000 reviews, or a chain (3 or more same-name locations)</td><td>Rejected</td></tr>
-<tr><td>Age (5 years)</td><td>Documented licence or registration date; dated reviews; domain registration (RDAP); first web-archive capture</td><td>Older: Rejected. Not documented: Unverified</td></tr>
-<tr><td>Contact</td><td>Public phone, email or website</td><td>Unverified</td></tr>
-<tr><td>Opportunity</td><td>At least one <b>confirmed</b> issue</td><td>No Opportunity</td></tr></table>
-<p class="ok"><b>Why are many automatic finds Unverified?</b> A domain or archive date shows when a <i>website</i> appeared, not when the <i>company</i> was founded. Canvass won't present such estimates as facts. Open the company card and add the trade licence date with its source, and the company is re-validated immediately. If you accept the risk, switch on <i>Accept consistent estimates</i> in Settings.</p>
-<h3>Lead score (100 points, configurable)</h3><p>Age 20 · Active and authentic 25 · Google Business opportunities 25 · Website/SEO opportunities 20 · Contact information 10. High is 80 or more, Medium 60–79, Low below 60. The score measures <i>sales opportunity</i>, not trustworthiness, and it never overrides a failed check.</p></section>
+<section><h2>5. Bulk upload</h2><img src="../screenshots/v2/lf-bulk.png">
+<p>Drop an Excel or CSV file, or paste one item per line: websites, business names or Google Maps links. Recognised columns: Company, Website, Phone, Email, Address, City, Country, Industry, Google Maps link, Instagram, LinkedIn, plus <b>Established date</b> and <b>Established source</b> (for example a trade licence number) so age can be confirmed straight away. <i>Download a template</i> gives you a ready file.</p>
+<p>The optional <b>Filter</b> rejects businesses outside an industry or city. Rows repeated in the file, or already in Lead Finder, are skipped and listed under <i>Duplicates skipped</i>.</p></section>
 
-<section><h2>6. Qualified, Unverified, Rejected, No Opportunity</h2><img src="../screenshots/leads.png">
-<p>The <b>Qualified Leads</b> page has a tab for each category, plus <i>Duplicates skipped</i>. Search, filter by industry or priority, and sort. Click any row to open its company card. <b>Re-verify this page</b> runs every check again for the companies shown (this uses API requests).</p>
-<img src="../screenshots/leads-Rejected.png"><p class="cap">The Rejected tab shows the exact reason for each company.</p></section>
+<section><h2>6. Quick add</h2><img src="../screenshots/v2/lf-quickadd.png">
+<p>For one business you found yourself on Google Maps:</p>
+<ol><li>Pick a segment and area to open ready-made Google Maps searches, or search your own term.</li>
+<li>Optional, on a computer: drag <b>Grab for Canvass</b> to your bookmarks bar once. On any Google Maps business, click it to copy the details.</li>
+<li>Paste the details, a Maps link or copied text, then <b>Read details</b>. Tick the gaps you can see. The score and pitch ideas update.</li>
+<li><b>Save</b> adds it to the pipeline (claimed for you if "Claim it for me" is on). <b>Save &amp; check fully</b> also runs every Lead Finder check (website, age, Google profile) and links the report to the business.</li></ol>
+<p>If the business is already in Canvass, you'll see a warning first.</p></section>
 
-<section><h2>7. The company information card</h2><img src="../screenshots/card.png">
-<p>The card shows the facts that matter: industry, location, company age with its basis, website and website age, operational status, Maps and Directions links, phone, email, rating, recent review, photos, score, and the last verification date. Every fact shows where it came from.</p>
-<ul><li><b>Detected issues:</b> confirmed issues first. Potential improvements are folded underneath. Each one shows its source and date.</li>
-<li><b>Recommended services:</b> each one with the findings that justify it.</li>
-<li><b>Validation checks, Evidence sources, Website audit details, Customer review analysis:</b> expandable sections with the full technical detail.</li>
-<li><b>Add verification evidence:</b> record a licence date, recent activity, identity confirmation, "no website" or "fake business". A source is required.</li></ul></section>
+<section><h2>7. Results and the business report</h2><img src="../screenshots/v2/lf-results.png">
+<p><b>Results</b> has a tab for each outcome: Qualified, Unverified, No opportunity, Rejected, All, and Duplicates skipped. Search, filter by industry or priority, and sort. The ring shows the lead score. The <b>Pipeline</b> column shows the stage if the business is in the pipeline; click it to open the pipeline card.</p>
+<img src="../screenshots/v2/lf-rejected.png"><p class="cap">Rejected and Unverified businesses show the exact reason.</p>
+<img src="../screenshots/v2/lf-report.png">
+<p>Click any business for its <b>report</b>: score and priority, why it isn't qualified (if it isn't), contact details with their sources, age, activity, Google rating, what was found (confirmed issues first, possible improvements folded underneath), and services to pitch with the findings behind them.</p>
+<p>Fold-out sections hold the details: <b>Add evidence</b> (for example a licence date you confirmed; the business is re-checked immediately), <b>All checks</b>, <b>Sources</b>, <b>Website check</b> and <b>Reviews</b>. <b>Re-check</b> runs everything again with fresh data.</p></section>
 
-<section><h2>8. Sales pitches</h2><img src="../screenshots/card-pitch.png">
-<p>Every qualified lead gets five drafts: <b>Email, WhatsApp, Call script, Proposal</b> and <b>Free audit offer</b>. They use the company's real findings and the recommended services. They never include invented statistics or guaranteed results, and they include an opt-out line. Always read a draft before sending.</p>
-<p><b>Copy</b> puts the text on your clipboard. After you send it yourself, click <b>Log as sent</b>. The lead moves to <i>Contacted</i>, and Canvass warns you if the same channel was used recently (the default is 14 days). Mark <b>Do not contact</b> when someone opts out. Canvass does not send messages automatically.</p></section>
+<section><h2>8. Pitches and contact</h2><img src="../screenshots/v2/lf-pitch.png">
+<p>Every qualified business gets five drafts: <b>Email, WhatsApp, Call script, Proposal</b> and <b>Audit offer</b>. They use only real findings, include an opt-out line, and never promise results. Read them before sending.</p>
+<ul><li><b>Copy</b>, <b>Open in email</b> or <b>WhatsApp</b> to send it yourself. Canvass never sends anything on its own.</li>
+<li>After sending, click <b>I sent this</b>. It's recorded, the pipeline card moves to <b>Pitched</b> (claimed by you if nobody had it), and you're warned if the same channel was used in the last 14 days.</li>
+<li><b>Do not contact</b> blocks further contact records for a business that opted out.</li>
+<li><b>I confirmed these contact details myself</b> keeps Google-sourced phone numbers after Google's 30-day limit.</li></ul></section>
 
-<section><h2>9. Sales pipeline</h2><img src="../screenshots/pipeline.png">
-<p>Qualified leads arrive in <b>New</b> automatically. Open a card to change the stage (New, Contacted, Follow-up, Proposal sent, Negotiation, Won, Lost), assign a team member, set a follow-up date and add notes. Every change is recorded in the history. Filter by member, or show only follow-ups that are due. <b>Won</b> leads count as converted customers on the Dashboard.</p></section>
+<section><h2>9. The pipeline</h2><img src="../screenshots/v2/pipeline.png">
+<p>Qualified leads from Lead Finder land in <b>Spotted</b>, unclaimed, with Lead Finder's findings in the notes and a small radar mark on the card. From here everything works as in Pitch HQ: claim it, add helpers, log meetings and calls, drag it through the stages.</p>
+<p>Open a card that came from Lead Finder and click <b>Full report</b> to see its findings, pitches and sources. Google ratings and reviews are not copied into the pipeline, as Google's terms require.</p></section>
 
-<section><h2>10. Reports and backup</h2><img src="../screenshots/reports.png">
-<ul><li><b>Export:</b> qualified, pipeline, unverified, rejected, no-opportunity or all companies, as Excel (with a summary sheet) or CSV. Google ratings, reviews and Google-only contact details are left out unless you change that in Settings.</li>
-<li><b>Backup:</b> Canvass saves a backup automatically every day and keeps 14. <i>Download backup</i> saves a file you can keep elsewhere. <i>Restore</i> replaces the current data, after first saving a safety copy. API keys are never put in backups.</li>
-<li><b>Search history</b> and <b>API usage and estimated cost</b> show what ran and how many API requests it used.</li></ul></section>
+<section><h2>10. Reports and backup</h2><img src="../screenshots/v2/lf-reports.png">
+<ul><li><b>Export</b> qualified, in-pipeline, unverified, no-opportunity, rejected or all businesses to Excel (with a summary sheet) or CSV. Google ratings, reviews and Google-only contact details are left out unless the admin allows them in Settings.</li>
+<li><b>Backup &amp; restore</b>: a backup is made on the server every day and the last 14 are kept. <i>Download backup</i> saves a copy for you. API keys are never in a backup.</li>
+<li><b>Moving from the Windows version (v1.0)</b>: in the old app use <i>Reports and Backup → Download backup</i>. Here the admin uses <i>Restore from file</i>. Leads that were in the old sales pipeline are added to the Canvass pipeline at the matching stage.</li>
+<li><b>Google usage</b> and <b>Search history</b> show what ran and how many requests it used.</li></ul></section>
 
-<section><h2>11. Settings</h2><img src="../screenshots/settings.png">
+<section><h2>11. Lead Finder settings</h2><img src="../screenshots/v2/lf-settings.png">
+<p>Only the admin can change these. Everyone else can see them.</p>
 <table><tr><th>Section</th><th>What you can change</th></tr>
-<tr><td>API keys</td><td>Google Places key (needed for discovery), PageSpeed key (recommended)</td></tr>
-<tr><td>Lead eligibility</td><td>Age window (years), activity signals needed, what counts as a recent review, large-business and chain limits, max companies per search, the estimate option, the old-website rule, whether a confirmed issue is required</td></tr>
-<tr><td>Score weights</td><td>The five score parts and the priority bands</td></tr>
-<tr><td>Benchmarks</td><td>Minimum reviews, rating and photos per industry</td></tr>
-<tr><td>Your company / Team</td><td>Pitch signature; team member names</td></tr>
-<tr><td>Services / Industries</td><td>Turn services on or off; edit industries, Google place types and keywords</td></tr>
-<tr><td>Data and compliance</td><td>Google data retention (30 days or less), links checked per site, parallel processing, contact cooldown, price per 1,000 requests, PageSpeed on or off, Google content in exports</td></tr></table></section>
+<tr><td>Google keys</td><td>Google Places key (needed for Find on Google); PageSpeed key (optional, for speed tests). Keys are masked and never leave the server.</td></tr>
+<tr><td>Free-tier protection</td><td>Requests per month (default 900) and per day (default 50). Leave it switched on.</td></tr>
+<tr><td>Which businesses qualify</td><td>Founded within (years, default 5), activity signals needed, recent review window, too-large and chain limits, most businesses per search, the estimate option, the old-website rule, whether a confirmed issue is required, and whether qualified leads join the pipeline automatically.</td></tr>
+<tr><td>Lead score</td><td>The five score parts and where High and Medium priority start.</td></tr>
+<tr><td>Benchmarks</td><td>Minimum reviews, rating and photos per industry.</td></tr>
+<tr><td>Your company</td><td>Name, sender, phone, email and website used to sign pitches.</td></tr>
+<tr><td>Services and industries</td><td>Switch services on or off; edit industries, Google place types and keywords.</td></tr>
+<tr><td>Data and Google's terms</td><td>How long Google content is kept (30 days or less), links checked per website, the contact cooldown, speed tests, Google content in exports.</td></tr></table></section>
 
-<section><h2>12. Statuses glossary</h2>
-<table><tr><th>Status</th><th>Meaning</th></tr>
-<tr><td>Verified</td><td>Confirmed by documented or direct evidence, with a source</td></tr>
-<tr><td>Estimated</td><td>Based on supporting evidence only (for example domain or archive dates). Not proof</td></tr>
-<tr><td>Unverified</td><td>Not enough reliable evidence. Never sent to the pipeline automatically</td></tr>
-<tr><td>Not Available</td><td>The source didn't provide this information</td></tr>
-<tr><td>Not Applicable</td><td>Doesn't apply (for example website age when there is no website)</td></tr>
-<tr><td>Confirmed Issue</td><td>Measured directly (for example "no HTTPS", "no opening hours on Google")</td></tr>
-<tr><td>Potential Improvement</td><td>An opportunity to discuss; not proven to be a problem</td></tr></table>
-<h2 style="margin-top:18pt">13. Good practice and compliance</h2>
-<ul><li>Review every pitch before sending. Follow UAE and international rules on marketing messages, and honour opt-outs.</li>
-<li>Google content is kept for at most 30 days and then removed automatically. Click <i>Contact details confirmed</i> once you have verified a phone or email yourself.</li>
-<li>Keep API keys private. If one is exposed, replace it in Google Cloud.</li>
-<li>The <i>data</i> folder contains business contact details. Back it up and don't publish it.</li></ul></section>
+<section><h2>12. Accounts</h2><img src="../screenshots/v2/accounts-lock.png">
+<p>Accounts holds capital, expenses, income and recurring bills. It has its own password, separate from your login.</p>
+<ul><li>The first time, the <b>admin</b> opens Accounts and chooses the accounts password (at least 6 characters). Share it only with the partners who need it.</li>
+<li>Accounts locks again after 10 minutes without use, or when you click <b>Lock</b>. Only the admin can change the password; everyone else then needs the new one.</li>
+<li>Bill reminders appear on the Overview without amounts, so nothing private shows while Accounts is locked.</li></ul></section>
+
+<section><h2>13. How a business qualifies</h2>
+<table><tr><th>Check</th><th>What Canvass looks at</th><th>If it fails</th></tr>
+<tr><td>Not a duplicate</td><td>Google listing, website, phone, name and area</td><td>Skipped</td></tr>
+<tr><td>Open now</td><td>Google says open <i>plus</i> a recent sign (review in the last 12 months, working website, or your evidence) <i>plus</i> at least 2 signs in total</td><td>Closed: Rejected. Not enough evidence: Unverified</td></tr>
+<tr><td>Genuine</td><td>A Google Business listing or your confirmation</td><td>Unverified (Rejected if marked fake)</td></tr>
+<tr><td>Right industry</td><td>Google categories and name keywords</td><td>Other industry: Rejected. Unclear: Unverified</td></tr>
+<tr><td>Right area</td><td>The address city and country</td><td>Elsewhere: Rejected. No address: Unverified</td></tr>
+<tr><td>Small or growing</td><td>Not over 1,000 reviews and not a chain of 3 or more same-name places</td><td>Rejected</td></tr>
+<tr><td>Founded within 5 years</td><td>Licence or registration date with a source; old reviews; domain records and web archive (estimates only)</td><td>Older: Rejected. Not documented: Unverified</td></tr>
+<tr><td>Contact details</td><td>A public phone, email or website</td><td>Unverified</td></tr>
+<tr><td>Something to help with</td><td>At least one <b>confirmed</b> issue</td><td>No opportunity</td></tr></table>
+<p class="ok"><b>Why are many Google finds Unverified?</b> A domain date shows when a <i>website</i> appeared, not when the <i>company</i> started. Canvass won't treat that as proof, and an old domain alone never rejects a business. Add the licence date in the report and it's re-checked at once.</p>
+<h3>Lead score</h3><p>Out of 100: age 20, active and genuine 25, Google profile gaps 25, website gaps 20, contact details 10. High priority from 80, Medium from 60. The score shows the size of the <i>opportunity</i>, not how trustworthy a business is, and it never overrides a failed check.</p></section>
+
+<section><h2>14. Words used in Canvass</h2>
+<table><tr><th>Word</th><th>Meaning</th></tr>
+<tr><td>Qualified</td><td>Passed every check and has at least one confirmed issue. Goes to the pipeline.</td></tr>
+<tr><td>Unverified</td><td>Something important couldn't be confirmed. Never added to the pipeline automatically.</td></tr>
+<tr><td>Rejected</td><td>Fails a rule: too old, closed, too large or a chain, wrong area or industry, or not genuine.</td></tr>
+<tr><td>No opportunity</td><td>A good fit, but nothing confirmed to improve.</td></tr>
+<tr><td>Verified / Estimated</td><td>Confirmed with a documented source / based on supporting evidence only.</td></tr>
+<tr><td>Not Available</td><td>The source didn't provide this information. It isn't counted against the business.</td></tr>
+<tr><td>Confirmed issue / Possible improvement</td><td>Measured directly / worth discussing, not proven.</td></tr></table>
+<h2 style="margin-top:18pt">15. Good practice</h2>
+<ul><li>Review every pitch before sending, follow UAE and international rules on marketing messages, and honour opt-outs.</li>
+<li>Google content is removed automatically after 30 days. Google Place IDs are kept so a business can be re-checked.</li>
+<li>Keep API keys and passwords private. Type them only into Canvass, never into chats or emails.</li>
+<li>Leave free-tier protection on. Canvass stops before any request that would go past your limits.</li></ul></section>
 </body></html>

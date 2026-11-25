@@ -1,112 +1,60 @@
-# CANVASS – Intelligent Lead Finder & Business Validation ERP
+# Canvass
 
-**Discover. Validate. Analyse. Convert.**
+**One app for the whole team: Pitch HQ + Lead Finder, with one login.**
 
-A lead-finding ERP for Canvass. It finds new, active businesses that need website, Google Business Profile, SEO, branding or marketing work. It checks each business against strict rules, audits its online presence, scores the opportunity, recommends Canvass services and drafts a personalized pitch. Only leads that pass every mandatory check reach the sales pipeline.
+- **Pitch HQ** is the sales workspace: Overview, Pipeline (Spotted → Claimed → Building pitch → Pitched → Follow-up → Won), Businesses, Team, Reports, Accounts and My space.
+- **Lead Finder** is a tool inside it. It finds new businesses (on Google, from a list, or one at a time), checks each one against strict rules, audits its Google profile and website, scores the opportunity and drafts pitches. Businesses that pass every check join the pipeline under **Spotted**.
 
-> **Zero fabricated data.** Every finding stores its source and a timestamp. Missing data is shown as *Not Available*, never as a problem. Age that only rests on domain or archive dates is *Estimated*, not *Verified*.
+> **Zero fabricated data.** Every finding keeps its source and a timestamp. Missing data shows as *Not Available*, never as a problem. Age that rests only on domain or archive dates is *Estimated*, not *Verified*.
 
-![Dashboard](docs/screenshots/dashboard.png)
+![Lead Finder dashboard](docs/screenshots/v2/lf-dashboard.png)
 
-## Easiest: portable Windows package (nothing to install)
+## Try it on your computer
 
-Unzip **Canvass-Windows.zip** and double-click **Start Canvass.bat**. It contains its own Node.js runtime. Your data is saved in the `data` folder beside it. To build the package: `scripts/package-windows.sh` (it downloads Node.js for Windows, checks its checksum and writes `dist/Canvass-Windows.zip`).
+Download **Canvass-Local.zip** (from the release, or build it with `scripts/package-local.sh`), unzip it and:
 
-## Quick start (Windows, from source)
+- **Windows:** double-click **Start Canvass.bat**. PHP is included; nothing to install.
+- **Mac:** install PHP once (`brew install php`), then double-click **Start Canvass (Mac).command**.
 
-1. Install **Node.js LTS** (version 20 or newer) from <https://nodejs.org>. This is a one-time step.
-2. Double-click **`start-canvass.bat`**. Your browser opens at <http://localhost:4321>.
-3. In **Settings**, add your Google Places API key. To look around first, use **Load demo data**.
+Your browser opens <http://localhost:4400>. First sign-in: **MSB / admin** (change it in *My space*). Everything you add is saved in the `data` folder next to the app. Full guide: [docs/SETUP.md](docs/SETUP.md).
 
-macOS/Linux: run `./start-canvass.sh`. Phones or tablets on the same Wi-Fi: run `start-canvass-network.bat`, which asks you for an access PIN.
+## Put it online (Hostinger Premium Web Hosting)
 
-There's nothing to `npm install`. The app has no third-party server dependencies. Full guide: [docs/SETUP.md](docs/SETUP.md).
+The app is plain **PHP 8.2 + SQLite**, the same as Pitch HQ, so it runs on the current plan. Upload the contents of the `canvass/` folder, add one cron job, and sign in. Step by step: [docs/SETUP.md](docs/SETUP.md#put-it-online-hostinger).
 
-## What is complete, and what needs credentials
+## What's in the box
 
-| Feature | Status |
+| Area | What it does |
 |---|---|
-| Dashboard with 14 live statistics and 6 charts, all from processed data | ✅ Complete |
-| Module A: Google Auto Lead Finder (country, city, area, industry, category, number of leads) | ✅ Complete. **Needs a Google Places API key** (billing enabled) |
-| Module B: Bulk Upload (Excel, CSV, URLs, company names, Google Maps links) | ✅ Complete. Google checks need the key; website and age checks work without it |
-| Active-business verification (Google status, recent reviews, working website, hours, phone, map location, team evidence) | ✅ Complete |
-| Company and website age (documented licence date, RDAP domain records, Internet Archive, dated reviews) | ✅ Complete. No paid registry API is connected. Licence dates are added by the team or in the upload |
-| Google Business Profile audit (location, profile, photos, reviews, local SEO) with industry benchmarks | ✅ Complete. Needs the Places key |
-| Review analysis (themes, repeated complaints, confidence, authenticity note) | ✅ Complete. Limited to the ≤5 reviews the API returns |
-| Website audit (availability, HTTPS, mobile, SEO metadata, broken links, enquiry form, WhatsApp, CTAs, local SEO, AEO, content, e-commerce, maintenance) | ✅ Complete. Measured live |
-| PageSpeed Insights scores | ✅ Complete. The free quota is shared and often exhausted, so a free PageSpeed key is recommended |
-| Four validation categories plus duplicates, with mandatory rules overriding the score | ✅ Complete |
-| Configurable 100-point lead score with High/Medium/Low priority | ✅ Complete |
-| Service recommendations (34 Canvass services, each switchable) | ✅ Complete |
-| Pitch generator: email, WhatsApp, call script, proposal, free-audit offer | ✅ Complete. Built from real findings only |
-| Automatic **sending** of emails or WhatsApp messages | ❌ Not built. Needs an authorised email/WhatsApp Business integration and consent handling. Pitches are copied and sent by your team, then logged; repeat-message protection is built in |
-| Sales pipeline (7 stages, assignee, follow-ups, notes, history, contact log, do-not-contact) | ✅ Complete |
-| Duplicate detection (Place ID, domain, phone, name and location, name and domain) | ✅ Complete |
-| Backups (daily automatic, manual, download, restore), search history, audit history, API usage and cost | ✅ Complete |
-| Excel and CSV import/export | ✅ Complete |
-| Google Maps Platform compliance (30-day cache purge, attribution, Google content excluded from exports by default) | ✅ Complete |
-| **Free-tier protection**: hard monthly and daily limits on Google Places requests, enforced before a request is sent | ✅ Complete (on by default: 500 per month, 100 per day) |
-| Scheduled discovery (daily, weekly or monthly) | ✅ Complete. Runs while the app is running |
-| Team logins and multi-office cloud sync | ❌ Not built. The app is a local single-office server by design ("no login for local use"). Network mode with a PIN lets several devices on the same Wi-Fi share one database |
-| Android | ⚠️ Installable web app (PWA). Full install needs HTTPS; over plain Wi-Fi it opens in the browser. No native APK |
-| Windows installer | ⚠️ A startup launcher (`start-canvass.bat`), not an MSI installer. Node.js must be installed once |
-| Video training | ❌ Not produced. The PDF manual and PowerPoint deck include real screenshots instead |
+| Sidebar | Lead Finder has its own menu that opens under it and folds away. On phones it becomes a **Finder** tab with buttons at the top of each Lead Finder page |
+| Find on Google | Country, city, area, industry, business type and number of leads. Google Places API (New) |
+| Bulk upload | Excel, CSV, or pasted websites, names and Google Maps links |
+| Quick add | Paste one Google Maps listing (with the one-click grabber), score it, save it, optionally run every check on it |
+| Checks | Open now, genuine, industry, area, size, age within 5 years (rolling), contact details, at least one confirmed issue |
+| Audits | Google Business Profile, customer reviews, website (HTTPS, mobile, SEO, enquiry paths, WhatsApp, local SEO, AEO, broken links, PageSpeed) |
+| Results | Qualified, Unverified, No opportunity, Rejected, Duplicates skipped, with a 100-point lead score that never overrides a failed rule |
+| Pitches | Email, WhatsApp, call script, proposal, audit offer, from real findings only, never sent automatically; 14-day repeat warning and do-not-contact |
+| Pipeline hand-off | Qualified leads become pipeline cards (unclaimed, in Spotted) with the findings in the notes and a link to the full report |
+| Free-tier protection | Every Google Places request is counted per Pacific-Time month and day and refused **before sending** past the limits (default 900 a month, 50 a day) |
+| Google terms | Google content deleted after 30 days (Place ID kept), left out of exports by default, never copied into the pipeline |
+| Reports and backup | Excel and CSV export, daily backups, restore, search history, Google usage. **v1.0 (Windows) backups import here** |
+| Accounts | Capital, expenses, income and recurring bills behind a separate accounts password |
+| Security | Sign-in with hashed passwords, login attempt limits, app-only request header, private data folder, keys masked and never in backups |
 
-## The validation rules (summary)
-
-A company is **Qualified** only if **all** of these pass:
-
-- Not a duplicate.
-- Currently operating. Needs Google "operational" status **and** recent activity (a review within 12 months, a working website, or team-verified activity) **and** at least 2 activity signals. A Maps listing alone never counts.
-- Genuine business (a Google listing or team confirmation).
-- In the selected industry and location.
-- Small or growing (not over 1,000 reviews, not a chain of 3 or more same-name locations).
-- Established within the last **5 years**. The window rolls forward from today's date. Verification comes from a documented licence or registration date. A dated review older than the window rejects the company. Domain and archive dates are only supporting evidence.
-- Has public contact information.
-- Has at least one **confirmed** digital issue.
-
-When something fails, the company goes to **Rejected** (for example: old, closed, large, out of area, wrong industry, invalid or duplicate). When something can't be confirmed, it goes to **Unverified**. An eligible company with nothing to fix goes to **No Opportunity**. A high score can never override a failed rule. All thresholds are adjustable in Settings.
-
-## Project layout
+## For developers
 
 ```
-server/            Node.js backend (no dependencies)
-  index.js         Web server + REST API
-  lib/places.js    Google Places API (New) client
-  lib/verify.js    Age, activity, industry, location, size checks
-  lib/website-audit.js   Website audit + PageSpeed
-  lib/gbp-audit.js       Google Business Profile audit + review analysis
-  lib/scoring.js   Validation categories, lead score, service mapping
-  lib/pitch.js     Pitch generator
-  lib/engine.js    Discovery, bulk processing, jobs, scheduler
-  lib/db.js        Local JSON database, backups, retention purge
-public/            Web interface (HTML, CSS, JS, PWA files, SheetJS)
-test/              Automated tests (node --test)
-docs/              Setup guide, API docs, manual (PDF), training deck, test report
-samples/           Labelled demo upload template
-legacy/            Previous version of the app and its 102-business list (kept for reference)
-data/              Your database and backups (created on first run; never committed)
+canvass/                 the web app (upload this folder's contents)
+  index.html             Canvass shell (Pitch HQ screens)
+  lf.js, lf.css          Lead Finder screens
+  api.php                web API: Pitch HQ, Accounts, Lead Finder (lf_* actions)
+  cron.php               background worker (searches, schedules, backups, Google purge)
+  router.php             local test server rules (php -S)
+  lib/core.php           data folder, SQLite, sessions
+  lib/lf/                Lead Finder engine (ported rule for rule from v1.0)
+  tests/                 75 tests:  php canvass/tests/run.php
+scripts/package-local.sh builds dist/Canvass-Local.zip (PHP for Windows included)
+server/, public/, test/  v1.0 Windows app (Node.js), kept until Canvass 2.0 replaces it
 ```
 
-## Documentation
-
-- [Setup and installation](docs/SETUP.md)
-- [API configuration (Google keys)](docs/API-CONFIGURATION.md)
-- [REST API reference](docs/API.md)
-- [User manual (PDF)](docs/Canvass-User-Manual.pdf)
-- [Training presentation (PowerPoint)](docs/Canvass-Training.pptx)
-- [Validation test report](docs/TEST-REPORT.md)
-
-## Tests
-
-```bash
-npm test
-```
-
-Runs 65 automated checks covering mandatory rules, duplicate detection, API failures, missing-information handling, pipeline transfer, free-tier limits, retention purge, backups and API security.
-
-## Data and privacy
-
-- `data/` holds business contact details and is excluded from Git. Back it up with **Reports and Backup**.
-- API keys stay on the server. They are masked in the browser and never included in backup downloads.
-- The previous app's README mentioned an exposed PageSpeed key. Rotate that key in Google Cloud before using it here.
+Run the tests with `php canvass/tests/run.php`. They cover the validation rules, audits, free-tier limits, the engine with a mocked Google API, and the web API on a real local server. API reference: [docs/API.md](docs/API.md). Google keys: [docs/API-CONFIGURATION.md](docs/API-CONFIGURATION.md). Results: [docs/TEST-REPORT.md](docs/TEST-REPORT.md).
