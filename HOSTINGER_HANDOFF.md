@@ -42,7 +42,7 @@ Replace `USER` with the Hostinger username shown in hPanel and `SUBDOMAIN` with 
 7. **HTTPS:** hPanel → *Security → SSL* → install for the subdomain. The app redirects plain http to https.
 8. **First sign-in and passwords** (do this immediately):
    - Open `https://SUBDOMAIN.mhdshibili.com` and sign in as `MSB` / `admin`.
-   - Comet HQ **forces** a new password at the first sign-in of every seeded account (`MSB/admin`, `Ismail`, `Amal`, `Tins` with `0000`). Nothing else works until it is changed. Minimum 8 characters.
+   - Comet HQ **forces** a new password at the first sign-in of every seeded account (`MSB/admin`, `Ismail`, `Amal`, `Tins` with `0000`). Nothing else works until it is changed. Minimum 3 characters.
    - Then go to **Team → Team access**. For each person, either set a new temporary password with **Edit** (they must change it at their next sign-in) or switch off **Can sign in** for anyone who doesn't need access yet.
    - Passwords are stored as hashes only. Nobody, including the admin, can view them; the admin can only reset them.
 9. **Bring your data across:** on the local copy, *Telescope → Reports & backup → Download backup*. On the hosted site, sign in as the admin and use *Restore from file*. Keep the backup file off the public website.

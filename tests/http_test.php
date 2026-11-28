@@ -34,7 +34,7 @@ test('seeded accounts must choose a new password before anything else works', fu
   eq($get('admin', 'me')['data']['user']['mustChangePassword'], true);
   $r = $get('admin', 'lf_dashboard'); eq($r['status'], 403); match_('/new password first/', $r['data']['error']);
   eq($post('admin', 'biz_set', ['id' => 'blocked1', 'data' => ['name' => 'X']])['status'], 403);
-  eq($post('admin', 'password', ['current' => 'admin', 'new' => 'short'])['status'], 400, 'at least 8 characters');
+  eq($post('admin', 'password', ['current' => 'admin', 'new' => 'ab'])['status'], 400, 'at least 3 characters');
   eq($post('admin', 'password', ['current' => 'admin', 'new' => 'admin'])['status'], 400);
   eq($post('admin', 'password', ['current' => 'admin', 'new' => 'AdminPass1'])['status'], 200);
   eq($post('scout', 'password', ['current' => '0000', 'new' => 'ScoutPass1'])['status'], 200);

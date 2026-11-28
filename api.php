@@ -226,7 +226,7 @@ case 'member_update': {                 // your own colour, focus, light/dark, m
 case 'password': {                      // change your own password
   $u = me(); $b = body(); $new = (string) ($b['new'] ?? '');
   if (!password_verify((string) ($b['current'] ?? ''), $u['pass_hash'])) bad('Your current password isn’t right.', 403);
-  if (mb_strlen($new) < 8) bad('Use at least 8 characters.');
+  if (mb_strlen($new) < 3) bad('Use at least 3 characters.');
   if (password_verify($new, $u['pass_hash'])) bad('Choose a password that is different from the current one.');
   db()->prepare('UPDATE users SET pass_hash=?, must_change_pw=0, updated_at=? WHERE id=?')->execute([password_hash($new, PASSWORD_DEFAULT), nowMs(), $u['id']]);
   db()->prepare('DELETE FROM sessions WHERE user_id=? AND token_hash<>?')->execute([$u['id'], tokenHash()]);   // sign out other devices
@@ -325,7 +325,7 @@ case 'admin_user_save': {
   $role = ($b['role'] ?? 'Scout') === 'Designer' ? 'Designer' : 'Scout';
   $admin = !empty($b['isAdmin']) ? 1 : 0; $active = array_key_exists('active', $b) ? (!empty($b['active']) ? 1 : 0) : 1;
   $pw = isset($b['password']) ? (string) $b['password'] : null;
-  if ($pw !== null && $pw !== '' && mb_strlen($pw) < 8) bad('Passwords need at least 8 characters.');
+  if ($pw !== null && $pw !== '' && mb_strlen($pw) < 3) bad('Passwords need at least 3 characters.');
   $dupe = $pdo->prepare('SELECT id FROM users WHERE username=? COLLATE NOCASE AND id<>?'); $dupe->execute([$username, $id]);
   if ($dupe->fetchColumn()) bad('That username is taken.');
   if ($id === '') {
