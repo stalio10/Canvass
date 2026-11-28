@@ -1,6 +1,11 @@
-# Local database, backups and logs (contain business data — keep out of Git)
 data/
+backups/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
 *.log
-node_modules/
+*.pem
+*.key
 .env
-dist/
+config.php
