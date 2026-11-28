@@ -16,8 +16,8 @@ This is the PHP version of Comet HQ. GitHub and Hostinger were not changed by th
 
 1. In the local app, open **Telescope → Reports & backup → Download backup**.
 2. Keep that downloaded JSON as the migration copy. It contains the businesses, pipeline links, search history and usage counters, but it intentionally does not contain API keys.
-3. On Hostinger, create the subdomain and point its document root to the contents of this project’s `app` folder.
-4. Upload the contents of `app` only. Do not upload the local `php` runtime, old test folders, or any file containing a secret.
+3. On Hostinger, create the subdomain and point its document root to the PHP application root. For this GitHub v2 release, that is the repository root containing `api.php`, `index.html`, `lib/` and `cron.php`.
+4. Upload the PHP application files from this release root only. Do not upload local databases, backups, temporary test clones, a bundled local PHP runtime, or any file containing a secret.
 5. Put the backup JSON somewhere temporary outside the public document root, sign in as the Comet HQ administrator, and use **Telescope → Reports & backup → Restore from file**.
 6. Enter the Google Places API key again in **Telescope → Settings** on the hosted site. Keep the key restricted to the services and server origin actually used by the hosted app.
 7. Change the seeded passwords immediately in **My space** and **Team**.
