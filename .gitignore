@@ -8,4 +8,4 @@ backups/
 *.pem
 *.key
 .env
-config.php
+/config.php

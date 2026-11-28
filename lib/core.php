@@ -107,6 +107,11 @@ function rev(): int { return (int) (meta_get('rev', 0)); }
 function ip(): string { return $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '?'; }
 function tokenHash(): string { $t = $_COOKIE['canvass_t'] ?? ''; return $t === '' ? '' : hash('sha256', $t); }
 function localTestingAccess(): bool {
+  // This shortcut is strictly for a real local request. Never trust Host or
+  // proxy headers alone: a public visitor can choose those headers.
+  $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+  if (!in_array($remote, ['127.0.0.1', '::1'], true)) return false;
+  if ((string) (getenv('CANVASS_HOSTED') ?: '') === '1') return false;
   $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? ''));
   $host = preg_replace('/:\d+$/', '', $host);
   return in_array($host, ['localhost', '127.0.0.1', '[::1]', '::1'], true) && meta_get('local_testing_access', '0') === '1';
