@@ -30,6 +30,17 @@ test('signed-out visitors get nothing, and sign-in is required', function () use
   eq($post('scout', 'login', ['username' => 'Amal', 'password' => '0000'])['status'], 200);
   eq($get('admin', 'me')['data']['user']['isAdmin'], true);
 });
+test('seeded accounts must choose a new password before anything else works', function () use ($get, $post) {
+  eq($get('admin', 'me')['data']['user']['mustChangePassword'], true);
+  $r = $get('admin', 'lf_dashboard'); eq($r['status'], 403); match_('/new password first/', $r['data']['error']);
+  eq($post('admin', 'biz_set', ['id' => 'blocked1', 'data' => ['name' => 'X']])['status'], 403);
+  eq($post('admin', 'password', ['current' => 'admin', 'new' => 'short'])['status'], 400, 'at least 8 characters');
+  eq($post('admin', 'password', ['current' => 'admin', 'new' => 'admin'])['status'], 400);
+  eq($post('admin', 'password', ['current' => 'admin', 'new' => 'AdminPass1'])['status'], 200);
+  eq($post('scout', 'password', ['current' => '0000', 'new' => 'ScoutPass1'])['status'], 200);
+  eq($get('admin', 'me')['data']['user']['mustChangePassword'], false);
+  eq($get('admin', 'lf_dashboard')['status'], 200);
+});
 test('write requests without the app header are refused (cross-site protection)', function () use ($call) {
   eq($call('admin', 'POST', 'api.php?a=lf_demo_load', [], false)['status'], 400);
 });
@@ -131,4 +142,38 @@ test('Pitch HQ actions still work: create, claim race, helpers, activity, delete
 test('the code library and data are never served', function () use ($call) {
   foreach (['lib/core.php', 'lib/lf/store.php', 'router.php', 'cron.php', 'tests/run.php'] as $p) eq($call('x', 'GET', $p)['status'], 403, $p);
   eq($call('x', 'GET', '')['status'], 200);
+});
+test('passwords are stored as hashes only and are never returned, even to the admin', function () use ($get, $post, $dir) {
+  $users = $get('admin', 'admin_users')['data']['users']; ok_(count($users) >= 4);
+  foreach ($users as $u) { ok_(!array_key_exists('password', $u), 'no password field'); }
+  $pdo = new PDO('sqlite:' . $dir . '/canvass.sqlite');
+  $cols = array_column($pdo->query('PRAGMA table_info(users)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+  ok_(!in_array('pass_plain', $cols, true) || (int) $pdo->query('SELECT COUNT(*) FROM users WHERE pass_plain IS NOT NULL')->fetchColumn() === 0, 'no readable passwords');
+  foreach ($pdo->query('SELECT pass_hash FROM users')->fetchAll(PDO::FETCH_COLUMN) as $h) ok_(str_starts_with($h, '$2y$') || str_starts_with($h, '$argon'), 'hashed');
+});
+test('an admin reset gives a temporary password that must be changed', function () use ($get, $post, $dir) {
+  $pdo = new PDO('sqlite:' . $dir . '/canvass.sqlite'); $pdo->exec('DELETE FROM attempts');
+  $amal = current(array_filter($get('admin', 'admin_users')['data']['users'], fn($u) => $u['username'] === 'Amal'));
+  eq($post('admin', 'admin_user_save', ['id' => $amal['id'], 'username' => 'Amal', 'name' => 'Amal', 'role' => 'Scout', 'password' => 'Temp12345'])['status'], 200);
+  eq($post('amal2', 'login', ['username' => 'Amal', 'password' => 'Temp12345'])['status'], 200);
+  eq($get('amal2', 'me')['data']['user']['mustChangePassword'], true); eq($get('amal2', 'lf_dashboard')['status'], 403);
+  eq($post('amal2', 'password', ['current' => 'Temp12345', 'new' => 'AmalOwnPass'])['status'], 200);
+  eq($get('amal2', 'lf_dashboard')['status'], 200);
+});
+test('the login limit can’t be dodged with a faked CF-Connecting-IP header', function () use ($base, $dir) {
+  $pdo = new PDO('sqlite:' . $dir . '/canvass.sqlite'); $pdo->exec('DELETE FROM attempts');
+  $codes = [];
+  for ($i = 0; $i < 12; $i++) {
+    $ch = curl_init($base . 'api.php?a=login'); curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_POSTFIELDS => json_encode(['username' => 'MSB', 'password' => 'nope']),
+      CURLOPT_HTTPHEADER => ['X-Canvass: 1', 'Content-Type: application/json', 'CF-Connecting-IP: 203.0.113.' . $i]]);
+    curl_exec($ch); $codes[] = curl_getinfo($ch, CURLINFO_RESPONSE_CODE); curl_close($ch);
+  }
+  eq(end($codes), 429, 'still blocked after 10 tries');
+});
+test('local testing access never works on the hosted site', function () {
+  require_once __DIR__ . '/../lib/core.php';
+  putenv('CANVASS_HOSTED=1'); $_SERVER['REMOTE_ADDR'] = '127.0.0.1'; $_SERVER['HTTP_HOST'] = 'localhost'; meta_set('local_testing_access', '1');
+  eq(localTestingAccess(), false, 'hosted');
+  putenv('CANVASS_HOSTED'); $_SERVER['REMOTE_ADDR'] = '203.0.113.5'; eq(localTestingAccess(), false, 'not a loopback request');
+  meta_set('local_testing_access', '0'); $_SERVER['REMOTE_ADDR'] = '127.0.0.1'; eq(localTestingAccess(), false, 'off by default');
 });

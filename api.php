@@ -71,6 +71,9 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 try {
 if ($method === 'POST' && ($_SERVER['HTTP_X_CANVASS'] ?? '') !== '1') bad('Bad request', 400); // blocks cross-site form posts
 
+// Seeded accounts and admin resets use temporary passwords: nothing else works until a new one is chosen.
+if (!in_array($a, ['me', 'login', 'logout', 'password', 'sync'], true)) { $cu = me(false); if ($cu && (int) ($cu['must_change_pw'] ?? 0) === 1) bad('Choose a new password first.', 403); }
+
 if (str_starts_with($a, 'lf_')) {                                    // Lead Finder
   require_once __DIR__ . '/lib/lf/api.php';
   $u = me();
@@ -223,8 +226,10 @@ case 'member_update': {                 // your own colour, focus, light/dark, m
 case 'password': {                      // change your own password
   $u = me(); $b = body(); $new = (string) ($b['new'] ?? '');
   if (!password_verify((string) ($b['current'] ?? ''), $u['pass_hash'])) bad('Your current password isn’t right.', 403);
-  if (mb_strlen($new) < 4) bad('Use at least 4 characters.');
-  db()->prepare('UPDATE users SET pass_hash=?, pass_plain=?, updated_at=? WHERE id=?')->execute([password_hash($new, PASSWORD_DEFAULT), $new, nowMs(), $u['id']]);
+  if (mb_strlen($new) < 8) bad('Use at least 8 characters.');
+  if (password_verify($new, $u['pass_hash'])) bad('Choose a password that is different from the current one.');
+  db()->prepare('UPDATE users SET pass_hash=?, must_change_pw=0, updated_at=? WHERE id=?')->execute([password_hash($new, PASSWORD_DEFAULT), nowMs(), $u['id']]);
+  db()->prepare('DELETE FROM sessions WHERE user_id=? AND token_hash<>?')->execute([$u['id'], tokenHash()]);   // sign out other devices
   out(['ok' => true]);
 }
 
@@ -308,7 +313,7 @@ case 'rec_save': {
 case 'admin_users': {
   $u = me(); if (!isAdmin($u)) bad('Admins only', 403);
   $rows = db()->query('SELECT * FROM users ORDER BY active DESC, joined_at')->fetchAll();
-  out(['users' => array_map(fn($r) => pubUser($r) + ['username' => $r['username'], 'password' => $r['pass_plain']], $rows)]);
+  out(['users' => array_map(fn($r) => pubUser($r) + ['username' => $r['username'], 'mustChangePassword' => (int) ($r['must_change_pw'] ?? 0) === 1], $rows)]);   // passwords are never returned: only hashes are stored
 }
 
 case 'admin_user_save': {
@@ -320,20 +325,20 @@ case 'admin_user_save': {
   $role = ($b['role'] ?? 'Scout') === 'Designer' ? 'Designer' : 'Scout';
   $admin = !empty($b['isAdmin']) ? 1 : 0; $active = array_key_exists('active', $b) ? (!empty($b['active']) ? 1 : 0) : 1;
   $pw = isset($b['password']) ? (string) $b['password'] : null;
-  if ($pw !== null && $pw !== '' && mb_strlen($pw) < 4) bad('Passwords need at least 4 characters.');
+  if ($pw !== null && $pw !== '' && mb_strlen($pw) < 8) bad('Passwords need at least 8 characters.');
   $dupe = $pdo->prepare('SELECT id FROM users WHERE username=? COLLATE NOCASE AND id<>?'); $dupe->execute([$username, $id]);
   if ($dupe->fetchColumn()) bad('That username is taken.');
   if ($id === '') {
     if ($pw === null || $pw === '') bad('Set a password for the new person.');
     $used = array_map('intval', $pdo->query('SELECT color_idx FROM users WHERE active=1')->fetchAll(PDO::FETCH_COLUMN));
     $ci = 0; while (in_array($ci, $used, true) && $ci < NPC) $ci++;
-    $pdo->prepare('INSERT INTO users(id,username,name,pass_hash,pass_plain,role,is_admin,color_idx,active,joined_at,updated_at) VALUES(?,?,?,?,?,?,?,?,1,?,?)')
-      ->execute(['u_' . bin2hex(random_bytes(5)), $username, mb_substr($name, 0, 60), password_hash($pw, PASSWORD_DEFAULT), $pw, $role, $admin, $ci % NPC, nowMs(), nowMs()]);
+    $pdo->prepare('INSERT INTO users(id,username,name,pass_hash,role,is_admin,color_idx,active,must_change_pw,joined_at,updated_at) VALUES(?,?,?,?,?,?,?,1,1,?,?)')   // temporary password: changed at first sign-in
+      ->execute(['u_' . bin2hex(random_bytes(5)), $username, mb_substr($name, 0, 60), password_hash($pw, PASSWORD_DEFAULT), $role, $admin, $ci % NPC, nowMs(), nowMs()]);
   } else {
     $cur = $pdo->prepare('SELECT * FROM users WHERE id=?'); $cur->execute([$id]); $c = $cur->fetch(); if (!$c) bad('Person not found', 404);
     if ($id === $u['id'] && (!$admin || !$active)) bad('You can’t remove your own admin access.');
     $pdo->prepare('UPDATE users SET username=?, name=?, role=?, is_admin=?, active=?, updated_at=? WHERE id=?')->execute([$username, mb_substr($name, 0, 60), $role, $admin, $active, nowMs(), $id]);
-    if ($pw !== null && $pw !== '') $pdo->prepare('UPDATE users SET pass_hash=?, pass_plain=? WHERE id=?')->execute([password_hash($pw, PASSWORD_DEFAULT), $pw, $id]);
+    if ($pw !== null && $pw !== '') $pdo->prepare('UPDATE users SET pass_hash=?, must_change_pw=? WHERE id=?')->execute([password_hash($pw, PASSWORD_DEFAULT), $id === $u['id'] ? 0 : 1, $id]);   // a reset is temporary for others
     if (!$active || ($pw !== null && $pw !== '' && $id !== $u['id'])) $pdo->prepare('DELETE FROM sessions WHERE user_id=?')->execute([$id]); // sign them out everywhere
   }
   bump(); out(['ok' => true]);

@@ -1044,8 +1044,8 @@ function startSession(u){hideLogin();S.live=true;S.loaded=false;S.uid=u.id;S.me=
  S.themeSrv=u.theme;applyTheme(u.theme);
  S.assets={upload:async f=>{const fd=new FormData();fd.append('file',f);return api('upload',fd)}};
  clearTimeout(loadTimer);loadTimer=setTimeout(()=>{if(!S.loaded){S.stale=true;render()}},10000);
- render.full=true;render();sync(true,true);if(window.LF)LF.start()}
-function signedOut(msg){clearTimeout(syncT);if(window.LF)LF.stop();if(S.acc){clearTimeout(S.acc.idle);S.acc.unlocked=false;S.acc.entries=[]}S.live=false;S.uid=null;S.me=null;S.loaded=false;S.biz=new Map();S.members=new Map();S.prof={};closeDrawer();closeModal();
+ render.full=true;render();if(u.mustChangePassword){pwForm(true);return}sync(true,true);if(window.LF)LF.start()}
+function signedOut(msg){clearTimeout(syncT);S.forcePw=false;if(window.LF)LF.stop();if(S.acc){clearTimeout(S.acc.idle);S.acc.unlocked=false;S.acc.entries=[]}S.live=false;S.uid=null;S.me=null;S.loaded=false;S.biz=new Map();S.members=new Map();S.prof={};closeDrawer();closeModal();
  render();showLogin(msg||'You’ve been signed out. Sign in again.')}
 async function logout(){try{await api('logout',{})}catch{}signedOut(' ');$('#lgErr').textContent='';info('You’re signed out.')}
 
@@ -1701,7 +1701,7 @@ function openNew(prefill={}){if(!S.canWrite){warn('You have view-only access. As
   const igw=$('#n_ig').value.trim();const isIg=igw.startsWith('@')||(!igw.includes('.')&&igw);
   const id=await createBiz({name:nm,category:$('#n_cat').value,area:$('#n_area').value.trim(),instagram:isIg?igw.replace(/^@/,''):'',website:!isIg?igw:'',value:Math.max(0,+$('#n_val').value||0),services:[...st.services],priority:st.priority,ownerId:st.claim?S.uid:null,status:st.claim?'claimed':'lead'});
   closeModal();if(id){ok(`${nm} added${st.claim?' and claimed for you':' to the pool'}`,'Open',()=>openDrawer(id))}}}
-function closeModal(){$('#modal').classList.remove('on');if(!S.openId&&!(window.LF&&LF.openId))$('#scrim').classList.remove('on');setTimeout(()=>{if(!$('#modal').classList.contains('on'))$('#modal').innerHTML=''},300)}
+function closeModal(){if(S.forcePw&&S.live)return;$('#modal').classList.remove('on');if(!S.openId&&!(window.LF&&LF.openId))$('#scrim').classList.remove('on');setTimeout(()=>{if(!$('#modal').classList.contains('on'))$('#modal').innerHTML=''},300)}
 
 /* ================= palette ================= */
 let palSel=0,palItems=[];
@@ -1911,20 +1911,20 @@ async function clearExamples(){const ex=all().filter(b=>b.example);ex.forEach(b=
 async function loadAdminUsers(){if(S.adminLoading)return;S.adminLoading=true;try{const j=await api('admin_users');S.adminUsers=j.users}catch(e){fail(e)}S.adminLoading=false;if(S.view==='team')render()}
 function teamAccess(){if(!S.adminUsers){loadAdminUsers();return`<section class="card" style="margin-top:16px;--i:2"><div class="card-h"><h2>Team access</h2></div><div class="skel" style="height:160px"></div></section>`}
  S.revealPw=S.revealPw||new Set();
- return`<section class="card" style="margin-top:16px;--i:2"><div class="card-h"><h2>Team access</h2><span class="sub">Only you see this. Add people, reset passwords, turn access off.</span><span class="grow"></span><button class="btn filled sm rp" data-act="addUser"><span class="ms">person_add</span>Add person</button></div>
+ return`<section class="card" style="margin-top:16px;--i:2"><div class="card-h"><h2>Team access</h2><span class="sub">Only you see this. Add people, reset passwords, turn access off. Passwords can’t be viewed, only reset.</span><span class="grow"></span><button class="btn filled sm rp" data-act="addUser"><span class="ms">person_add</span>Add person</button></div>
  <div>${S.adminUsers.map(u=>{const show=S.revealPw.has(u.id);return`<div class="ta-row ${u.active?'':'off'}">
   <span class="av" style="--pc:var(--p${(u.colorIdx||0)%NPC})">${esc(initials(u.name))}</span>
   <span class="t"><b>${esc(u.name)}${u.isAdmin?'<span class="badge">Admin</span>':''}${u.active?'':'<span class="badge off">No access</span>'}</b><span>@${esc(u.username)} · ${esc(u.role)}</span></span>
-  <span class="pwv" title="Password"><span>${show?esc(u.password||''):'••••••'}</span><button class="icon-btn rp" data-pwshow="${esc(u.id)}" aria-label="${show?'Hide':'Show'} ${esc(u.name)}’s password"><span class="ms">${show?'visibility_off':'visibility'}</span></button></span>
+  <span class="pwv" title="Passwords are stored securely and can’t be viewed. Use Edit to set a temporary one."><span>${u.mustChangePassword?'Must change':'Set'}</span><span class="ms" style="font-size:18px;padding:0 6px">${u.mustChangePassword?'lock_reset':'lock'}</span></span>
   <button class="btn outline sm rp" data-edituser="${esc(u.id)}"><span class="ms">edit</span>Edit</button></div>`}).join('')}</div></section>`}
 function userForm(u){const isNew=!u;u=u||{name:'',username:'',password:'',role:'Scout',isAdmin:false,active:true};const st={role:u.role,isAdmin:!!u.isAdmin,active:u.active!==false};const self=u.id===S.uid;
  const m=$('#modal');m.innerHTML=`<form class="sheet" id="uForm" novalidate><h2 id="mTitle">${isNew?'Add a person':'Edit '+esc(u.name)}</h2><p class="lead">${isNew?'They sign in with this username and password. They can change the password later in My space.':'Changes apply right away. Changing the password or turning off access signs them out.'}</p>
  <div class="fields">
   <div class="field"><label for="u_name">Name shown to the team</label><input class="inp" id="u_name" maxlength="60" value="${esc(u.name)}" placeholder="e.g. Ismael"></div>
   <div class="field"><label for="u_user">Username</label><input class="inp" id="u_user" maxlength="32" autocapitalize="none" spellcheck="false" value="${esc(u.username)}" placeholder="e.g. Ismael"></div>
-  <div class="field full"><label for="u_pw">Password</label><input class="inp" id="u_pw" maxlength="100" autocomplete="off" value="${esc(u.password||'')}" placeholder="${isNew?'At least 4 characters':''}"></div>
+  <div class="field full"><label for="u_pw">${isNew?'Temporary password':'New temporary password'}</label><input class="inp" id="u_pw" type="password" maxlength="100" autocomplete="new-password" value="" placeholder="${isNew?'At least 8 characters':'Leave empty to keep their password'}"><span class="hint" style="margin:4px 0 0">${self?'This becomes your password.':'They must choose their own password the next time they sign in.'}</span></div>
   <div class="field full"><label>Role</label><div class="seg" id="u_role">${['Scout','Designer'].map(r=>`<button type="button" class="rp" data-urole="${r}" aria-pressed="${st.role===r}">${r}</button>`).join('')}</div></div>
-  <div class="field full"><div class="switch" data-usw="isAdmin" role="switch" tabindex="0" aria-checked="${st.isAdmin}" ${self?'aria-disabled="true" style="opacity:.6"':''}><div class="t"><b>Admin</b><span>Can add and remove people and see passwords.</span></div><span class="tog" aria-checked="${st.isAdmin}"></span></div></div>
+  <div class="field full"><div class="switch" data-usw="isAdmin" role="switch" tabindex="0" aria-checked="${st.isAdmin}" ${self?'aria-disabled="true" style="opacity:.6"':''}><div class="t"><b>Admin</b><span>Can add and remove people and reset passwords.</span></div><span class="tog" aria-checked="${st.isAdmin}"></span></div></div>
   ${isNew?'':`<div class="field full"><div class="switch" data-usw="active" role="switch" tabindex="0" aria-checked="${st.active}" ${self?'aria-disabled="true" style="opacity:.6"':''}><div class="t"><b>Can sign in</b><span>Turn off to remove someone. Their businesses stay.</span></div><span class="tog" aria-checked="${st.active}"></span></div></div>`}
  </div>
  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px"><button type="button" class="btn text rp" data-act="closeModal">Cancel</button><button type="submit" class="btn filled rp" id="uSave"><span class="ms">${isNew?'person_add':'check'}</span>${isNew?'Add person':'Save'}</button></div></form>`;
@@ -1935,15 +1935,15 @@ function userForm(u){const isNew=!u;u=u||{name:'',username:'',password:'',role:'
  $('#uForm').onsubmit=async e=>{e.preventDefault();const b=$('#uSave');b.disabled=true;
   const body={id:u.id||'',name:$('#u_name').value.trim(),username:$('#u_user').value.trim(),password:$('#u_pw').value,role:st.role,isAdmin:st.isAdmin,active:st.active};
   try{await api('admin_user_save',body);closeModal();ok(isNew?`${body.name} can sign in now as ${body.username}`:`Saved changes for ${body.name}`);S.adminUsers=null;sync(true,true);render()}catch(err){warn(err.message)}b.disabled=false}}
-function pwForm(){const m=$('#modal');m.innerHTML=`<form class="sheet" id="pwForm" novalidate style="width:min(440px,100%)"><h2 id="mTitle">Change password</h2><p class="lead">Use something only you know. At least 4 characters.</p>
+function pwForm(force){S.forcePw=!!force;const m=$('#modal');m.innerHTML=`<form class="sheet" id="pwForm" novalidate style="width:min(440px,100%)"><h2 id="mTitle">${force?'Choose your own password':'Change password'}</h2><p class="lead">${force?'You signed in with a temporary password. Choose a new one that only you know before you continue. At least 8 characters.':'Use something only you know. At least 8 characters.'}</p>
  <div class="fields" style="grid-template-columns:1fr">
   <div class="field"><label for="pw_cur">Current password</label><input class="inp" id="pw_cur" type="password" autocomplete="current-password"></div>
   <div class="field"><label for="pw_new">New password</label><input class="inp" id="pw_new" type="password" autocomplete="new-password"></div>
   <div class="field"><label for="pw_new2">New password again</label><input class="inp" id="pw_new2" type="password" autocomplete="new-password"></div></div>
- <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px"><button type="button" class="btn text rp" data-act="closeModal">Cancel</button><button type="submit" class="btn filled rp"><span class="ms">key</span>Change password</button></div></form>`;
+ <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">${force?'<button type="button" class="btn text rp" data-act="logout">Sign out</button>':'<button type="button" class="btn text rp" data-act="closeModal">Cancel</button>'}<button type="submit" class="btn filled rp"><span class="ms">key</span>${force?'Save my password':'Change password'}</button></div></form>`;
  m.classList.add('on');$('#scrim').classList.add('on');if(!isTouch)setTimeout(()=>$('#pw_cur').focus(),50);m.onclick=null;
  $('#pwForm').onsubmit=async e=>{e.preventDefault();const n=$('#pw_new').value;if(n!==$('#pw_new2').value){warn('The new passwords don’t match');return}
-  try{await api('password',{current:$('#pw_cur').value,new:n});closeModal();ok('Password changed. Use the new one next time you sign in.');S.adminUsers=null}catch(err){warn(err.message)}}}
+  try{await api('password',{current:$('#pw_cur').value,new:n});const f=S.forcePw;S.forcePw=false;if(S.me)S.me.mustChangePassword=false;closeModal();ok('Password changed. Use the new one next time you sign in.');S.adminUsers=null;if(f){render.full=true;render();sync(true,true);if(window.LF)LF.start()}}catch(err){warn(err.message)}}}
 
 render();boot();
 </script>

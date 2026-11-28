@@ -20,13 +20,26 @@ const SEED_USERS = [
 
 class HttpFail extends RuntimeException { public int $http; public array $extra; public function __construct(string $m, int $code = 400, array $extra = []) { parent::__construct($m); $this->http = $code; $this->extra = $extra; } }
 
+/** Optional server settings in config.php next to api.php (kept out of Git, never served):
+ *  <?php return ['dataDir' => '/home/USER/domains/mhdshibili.com/comet-hq-data', 'hosted' => true]; */
+function appConfig(): array {
+  static $cfg = null; if ($cfg !== null) return $cfg;
+  $f = dirname(__DIR__) . '/config.php'; $c = is_file($f) ? include $f : [];
+  return $cfg = is_array($c) ? $c : [];
+}
+/** True on the public server: set CANVASS_HOSTED=1 or 'hosted' => true in config.php. */
+function isHosted(): bool { return (string) (getenv('CANVASS_HOSTED') ?: '') === '1' || !empty(appConfig()['hosted']); }
+
 function dataDir(): string {
   static $dir = null; if ($dir) return $dir;
   $cands = [];
   $root = dirname(__DIR__);                                         // the web folder (where index.html and api.php live)
   if ($e = getenv('CANVASS_DATA_DIR')) $cands[] = $e;
-  if (is_file("$root/config.php")) { $cfg = include "$root/config.php"; if (is_array($cfg) && !empty($cfg['dataDir'])) $cands[] = (string) $cfg['dataDir']; }   // optional, kept out of Git
-  $cands[] = dirname($root, 2) . '/canvass-hq-data';                // e.g. /home/u…/domains/mhdshibili.com/canvass-hq-data (Pitch HQ's folder)
+  if (!empty(appConfig()['dataDir'])) $cands[] = (string) appConfig()['dataDir'];
+  // Default: Comet HQ's own folder two levels above the website folder, e.g.
+  // website /home/USER/domains/mhdshibili.com/public_html/SUBDOMAIN → data /home/USER/domains/mhdshibili.com/comet-hq-data.
+  // Deliberately NOT Pitch HQ's canvass-hq-data folder, so the live Pitch HQ database is never shared.
+  $cands[] = dirname($root, 2) . '/comet-hq-data';
   $cands[] = $root . '/data';
   foreach ($cands as $d) {
     if (!is_dir($d)) @mkdir($d, 0700, true);
@@ -45,7 +58,7 @@ function db(): PDO {
   static $pdo = null; if ($pdo) return $pdo;
   $pdo = new PDO('sqlite:' . dataDir() . '/canvass.sqlite', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
   $pdo->exec('PRAGMA journal_mode=WAL; PRAGMA busy_timeout=8000; PRAGMA foreign_keys=ON;');
-  $pdo->exec("CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, username TEXT UNIQUE COLLATE NOCASE, name TEXT, pass_hash TEXT, pass_plain TEXT, role TEXT, is_admin INTEGER DEFAULT 0, color_idx INTEGER, focus TEXT DEFAULT '', theme TEXT DEFAULT '', active INTEGER DEFAULT 1, joined_at INTEGER, updated_at INTEGER);
+  $pdo->exec("CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY, username TEXT UNIQUE COLLATE NOCASE, name TEXT, pass_hash TEXT, role TEXT, is_admin INTEGER DEFAULT 0, color_idx INTEGER, focus TEXT DEFAULT '', theme TEXT DEFAULT '', active INTEGER DEFAULT 1, joined_at INTEGER, updated_at INTEGER);
     CREATE TABLE IF NOT EXISTS sessions(token_hash TEXT PRIMARY KEY, user_id TEXT, expires INTEGER, created INTEGER);
     CREATE TABLE IF NOT EXISTS businesses(id TEXT PRIMARY KEY, data TEXT, updated_at INTEGER);
     CREATE TABLE IF NOT EXISTS tombstones(id TEXT PRIMARY KEY, data TEXT, deleted_at INTEGER);
@@ -92,9 +105,15 @@ function db(): PDO {
   if (!in_array('acc_until', $cols, true)) $pdo->exec('ALTER TABLE sessions ADD COLUMN acc_until INTEGER DEFAULT 0');
   $ucols = array_column($pdo->query('PRAGMA table_info(users)')->fetchAll(), 'name');
   if (!in_array('mentions_seen', $ucols, true)) $pdo->exec('ALTER TABLE users ADD COLUMN mentions_seen INTEGER DEFAULT 0');
+  if (!in_array('must_change_pw', $ucols, true)) $pdo->exec('ALTER TABLE users ADD COLUMN must_change_pw INTEGER DEFAULT 0');
+  if (in_array('pass_plain', $ucols, true)) {                       // older databases kept readable passwords: erase them, keep hashes only
+    $pdo->exec('UPDATE users SET pass_plain=NULL');
+    try { $pdo->exec('ALTER TABLE users DROP COLUMN pass_plain'); } catch (Throwable $e) { /* SQLite before 3.35: the column stays, always empty */ }
+  }
   if ((int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() === 0) {
-    $st = $pdo->prepare('INSERT INTO users(id,username,name,pass_hash,pass_plain,role,is_admin,color_idx,joined_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?)');
-    foreach (SEED_USERS as $i => [$u, $n, $p, $r, $a]) $st->execute(['u_' . bin2hex(random_bytes(5)), $u, $n, password_hash($p, PASSWORD_DEFAULT), $p, $r, $a, $i % NPC, nowMs() + $i, nowMs()]);
+    // Seeded accounts must choose a new password at their first sign-in.
+    $st = $pdo->prepare('INSERT INTO users(id,username,name,pass_hash,role,is_admin,color_idx,must_change_pw,joined_at,updated_at) VALUES(?,?,?,?,?,?,?,1,?,?)');
+    foreach (SEED_USERS as $i => [$u, $n, $p, $r, $a]) $st->execute(['u_' . bin2hex(random_bytes(5)), $u, $n, password_hash($p, PASSWORD_DEFAULT), $r, $a, $i % NPC, nowMs() + $i, nowMs()]);
   }
   return $pdo;
 }
@@ -104,14 +123,15 @@ function bump(): void { db()->exec("INSERT INTO meta(k,v) VALUES('rev','1') ON C
 function rev(): int { return (int) (meta_get('rev', 0)); }
 
 /* ---------- auth ---------- */
-function ip(): string { return $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? '?'; }
+/** The connecting address only. Headers such as CF-Connecting-IP or X-Forwarded-For are set by the visitor and are never trusted. */
+function ip(): string { return (string) ($_SERVER['REMOTE_ADDR'] ?? '?'); }
 function tokenHash(): string { $t = $_COOKIE['canvass_t'] ?? ''; return $t === '' ? '' : hash('sha256', $t); }
 function localTestingAccess(): bool {
   // This shortcut is strictly for a real local request. Never trust Host or
   // proxy headers alone: a public visitor can choose those headers.
   $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
   if (!in_array($remote, ['127.0.0.1', '::1'], true)) return false;
-  if ((string) (getenv('CANVASS_HOSTED') ?: '') === '1') return false;
+  if (isHosted()) return false;
   $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? ''));
   $host = preg_replace('/:\d+$/', '', $host);
   return in_array($host, ['localhost', '127.0.0.1', '[::1]', '::1'], true) && meta_get('local_testing_access', '0') === '1';
@@ -131,7 +151,7 @@ function isAdmin(array $u): bool { return (int) $u['is_admin'] === 1; }
 function pubUser(array $u): array {
   return ['id' => $u['id'], 'name' => $u['name'], 'role' => $u['role'], 'isAdmin' => (int) $u['is_admin'] === 1, 'colorIdx' => (int) $u['color_idx'], 'focus' => $u['focus'] ?? '', 'joinedAt' => (int) $u['joined_at'], 'active' => (int) $u['active'] === 1, 'mentionsSeen' => (int) ($u['mentions_seen'] ?? 0)];
 }
-function meOut(array $u): array { return pubUser($u) + ['username' => $u['username'], 'theme' => $u['theme'] ?? '']; }
+function meOut(array $u): array { return pubUser($u) + ['username' => $u['username'], 'theme' => $u['theme'] ?? '', 'mustChangePassword' => (int) ($u['must_change_pw'] ?? 0) === 1]; }
 function userName(string $id): string { $st = db()->prepare('SELECT name FROM users WHERE id=?'); $st->execute([$id]); return (string) ($st->fetchColumn() ?: 'Someone'); }
 
 /* ---------- businesses (Pitch HQ) ---------- */
